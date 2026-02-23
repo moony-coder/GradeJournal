@@ -16,30 +16,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // ─── Security ───────────────────────────────────────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'", "'unsafe-inline'",
-        'cdnjs.cloudflare.com',
-        'cdn.jsdelivr.net',
-        'unpkg.com',
-      ],
-      scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'fonts.googleapis.com', 'cdnjs.cloudflare.com', 'cdn.jsdelivr.net'],
-      fontSrc: ["'self'", 'fonts.gstatic.com', 'fonts.googleapis.com', 'cdn.jsdelivr.net'],
-      imgSrc: ["'self'", 'data:', 'blob:', 'cdn.jsdelivr.net'],
-      connectSrc: [
-        "'self'",
-        '*.supabase.co',
-        'wss://*.supabase.co',
-        'cdn.jsdelivr.net',
-        'cdnjs.cloudflare.com',
-      ],
-      frameSrc: ["'none'"],
-      workerSrc: ["'self'", 'blob:'],
-    },
-  },
+  contentSecurityPolicy: false,
 }));
 
 app.use(compression());
@@ -55,11 +32,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-const allowedOrigin = process.env.ALLOWED_ORIGIN || (isProduction ? false : '*');
-app.use(cors({
-  origin: allowedOrigin,
-  credentials: true,
-}));
+app.use(cors({ origin: '*', credentials: false }));
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '5mb' }));
