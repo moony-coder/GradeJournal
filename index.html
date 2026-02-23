@@ -3202,62 +3202,43 @@
     <footer class="land-footer">© 2026 GradeJournal — Made for professional educators</footer>
   </div>
 
-  <!-- AUTH - FIXED VERSION WITH ALL ELEMENTS -->
-  <div id="s-auth" class="screen">
-    <div class="auth-container">
-      <div class="auth-logo-centered">
-        <div class="auth-logo-mark">
-          <ion-icon name="medical-outline"></ion-icon>
-        </div>
-        <h2>GradeJournal</h2>
-        <p id="auth-tagline">Welcome back — log in to continue</p>
+<!-- AUTH - FIXED VERSION (SIGN IN ONLY) -->
+<div id="s-auth" class="screen">
+  <div class="auth-container">
+    <div class="auth-logo-centered">
+      <div class="auth-logo-mark">
+        <ion-icon name="medical-outline"></ion-icon>
       </div>
+      <h2>GradeJournal</h2>
+      <p id="auth-tagline">Welcome back — log in to continue</p>
+    </div>
 
-      <div class="auth-split">
-        <div class="auth-split-form" style="width:100%;">
-          <div class="auth-tabs-wrap">
-            <div class="auth-tabs">
-              <button class="auth-tab active" id="tab-signin" onclick="authSwitchTab('signin')">Log In</button>
-              <button class="auth-tab" id="tab-signup" onclick="authSwitchTab('signup')">Sign Up</button>
-            </div>
+    <div class="auth-split">
+      <div class="auth-split-form" style="width:100%;">
+        <div class="auth-tabs-wrap">
+          <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-signin" onclick="authSwitchTab('signin')">Log In</button>
           </div>
-          <div class="auth-track-wrap">
-            <div class="auth-track" id="auth-track">
-              <!-- Sign In Panel -->
-              <div class="auth-panel">
-                <div id="err-signin" class="auth-error"></div>
-                <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="si-email"
-                    placeholder="teacher@school.com"></div>
-                <div class="form-group"><label>Password</label><input type="password" class="form-input"
-                    id="si-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit('signin')">
-                </div>
-                <button class="auth-submit" onclick="authSubmit('signin')">Log In to GradeJournal</button>
-                <div class="auth-divider">
-                  <div class="auth-divider-line"></div>
-                  <div class="auth-divider-text">or</div>
-                  <div class="auth-divider-line"></div>
-                </div>
-                <button class="auth-guest-btn" onclick="authSubmit('guest')">Continue as Guest</button>
-              </div>
-              <!-- Sign Up Panel -->
-              <div class="auth-panel">
-                <div id="err-signup" class="auth-error"></div>
-                <div class="form-group"><label>Full Name</label><input type="text" class="form-input" id="su-name"
-                    placeholder="John Smith"></div>
-                <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="su-email"
-                    placeholder="teacher@school.com"></div>
-                <div class="form-group"><label>Password</label><input type="password" class="form-input"
-                    id="su-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit('signup')"></div>
-                <button class="auth-submit" onclick="authSubmit('signup')">Create Account</button>
-              </div>
-            </div>
-          </div>
-          <div class="auth-back"><a onclick="showLanding()">← Back to home</a></div>
         </div>
+        <div class="auth-track-wrap">
+          <div class="auth-track" id="auth-track">
+            <!-- Sign In Panel - Only Panel -->
+            <div class="auth-panel" style="width:100%;">
+              <div id="err-signin" class="auth-error"></div>
+              <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="si-email"
+                  placeholder="teacher@school.com"></div>
+              <div class="form-group"><label>Password</label><input type="password" class="form-input"
+                  id="si-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit('signin')">
+              </div>
+              <button class="auth-submit" onclick="authSubmit('signin')">Log In to GradeJournal</button>
+            </div>
+          </div>
+        </div>
+        <div class="auth-back"><a onclick="showLanding()">← Back to home</a></div>
       </div>
     </div>
   </div>
-
+</div>
   <!-- HOME -->
   <div id="s-home" class="screen">
     <div class="topbar">
