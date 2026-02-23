@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=PlayfairDisplay:wght@400;600;700&family=DMSans:wght@300;400;500;600&display=swap"
     rel="stylesheet">
   
-  <!-- Ionicons (jsdelivr - more reliable than unpkg) -->
+  <!-- Ionicons -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   
@@ -665,17 +665,17 @@
     .auth-track {
       display: flex;
       transition: transform .4s cubic-bezier(.4, 0, .2, 1);
-      width: 100%
+      width: 200%
     }
 
     .auth-panel {
-      width: 100%;
+      width: 50%;
       padding: 24px;
       flex-shrink: 0
     }
 
     .auth-track.show-signup {
-      transform: translateX(0)
+      transform: translateX(-50%)
     }
 
     .form-group {
@@ -3202,7 +3202,7 @@
     <footer class="land-footer">© 2026 GradeJournal — Made for professional educators</footer>
   </div>
 
-  <!-- AUTH -->
+  <!-- AUTH - FIXED VERSION WITH ALL ELEMENTS -->
   <div id="s-auth" class="screen">
     <div class="auth-container">
       <div class="auth-logo-centered">
@@ -3218,11 +3218,13 @@
           <div class="auth-tabs-wrap">
             <div class="auth-tabs">
               <button class="auth-tab active" id="tab-signin" onclick="authSwitchTab('signin')">Log In</button>
+              <button class="auth-tab" id="tab-signup" onclick="authSwitchTab('signup')">Sign Up</button>
             </div>
           </div>
           <div class="auth-track-wrap">
             <div class="auth-track" id="auth-track">
-              <div class="auth-panel" style="width:100%;">
+              <!-- Sign In Panel -->
+              <div class="auth-panel">
                 <div id="err-signin" class="auth-error"></div>
                 <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="si-email"
                     placeholder="teacher@school.com"></div>
@@ -3235,6 +3237,18 @@
                   <div class="auth-divider-text">or</div>
                   <div class="auth-divider-line"></div>
                 </div>
+                <button class="auth-guest-btn" onclick="authSubmit('guest')">Continue as Guest</button>
+              </div>
+              <!-- Sign Up Panel -->
+              <div class="auth-panel">
+                <div id="err-signup" class="auth-error"></div>
+                <div class="form-group"><label>Full Name</label><input type="text" class="form-input" id="su-name"
+                    placeholder="John Smith"></div>
+                <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="su-email"
+                    placeholder="teacher@school.com"></div>
+                <div class="form-group"><label>Password</label><input type="password" class="form-input"
+                    id="su-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit('signup')"></div>
+                <button class="auth-submit" onclick="authSubmit('signup')">Create Account</button>
               </div>
             </div>
           </div>
@@ -3451,7 +3465,7 @@
         <button type="button" class="mode-btn" id="mode-ielts" onclick="toggleLessonMode('ielts')">
           <div class="mode-icon">🎯</div>
           <div class="mode-label">IELTS Mode</div>
-          <div class="mode-desc">4 sections  Overall Band</div>
+          <div class="mode-desc">4 sections + Overall Band</div>
         </button>
       </div>
 
@@ -3797,7 +3811,7 @@
               Open in Gmail
             </a>
             <p style="margin-top: 16px; font-size: 13px; color: var(--text-light);">
-              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6702140f0a121508030811490a0808095652575f27000a060e0b4904080a">[email&#160;protected]</a>
+              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6702140f0a121508030811490a0808095652575f27000a060e0b4904080a">eshmurodov.moon1508@gmail.com</a>
             </p>
           </div>
           
