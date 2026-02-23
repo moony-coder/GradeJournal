@@ -16,9 +16,8 @@
   <script nomodule src="https://cdn.jsdelivr.net/npm/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   
   <style>
-    /* Copy ALL your existing CSS here - the same as before */
-     :root {
-       --cream: #FAF7F2;
+    :root {
+      --cream: #FAF7F2;
       --cream-2: #F3EDE3;
       --cream-3: #EDE4D6;
       --warm-brown: #8B6F47;
@@ -499,23 +498,18 @@
       font-size: 13px
     }
 
-    /* ========== MODAL HEIGHT ========== */
-
-    .ov {
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* ========== AUTH - REDESIGNED ========== */
+    /* AUTH PAGE - REDESIGNED */
     #s-auth {
       padding: 0;
       overflow: hidden;
     }
+    
     .auth-page-wrap {
       display: flex;
       height: 100%;
       width: 100%;
     }
+    
     .auth-left-panel {
       width: 340px;
       min-width: 260px;
@@ -528,56 +522,69 @@
       gap: 32px;
       flex-shrink: 0;
     }
+    
     .auth-brand {
       display: flex;
       align-items: center;
       gap: 12px;
       color: white;
     }
+    
     .auth-brand-icon {
-      width: 40px; height: 40px;
+      width: 40px; 
+      height: 40px;
       background: rgba(255,255,255,.15);
       border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
       font-size: 22px;
     }
-    .auth-brand-icon ion-icon { color: white; }
+    
+    .auth-brand-icon ion-icon { 
+      color: white; 
+    }
+    
     .auth-brand-name {
       font-family: 'Playfair Display', serif;
       font-size: 22px;
       font-weight: 700;
       color: white;
     }
-    .auth-left-logo-container {
-      width: 120px; height: 120px;
-      border-radius: 24px;
-      overflow: hidden;
-      background: rgba(255,255,255,.12);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      border: 2px solid rgba(255,255,255,.2);
+    
+    .auth-features-mini {
+      margin: 20px 0;
+      width: 100%;
     }
-    .auth-left-logo-container img.auth-logo-img {
-      width: 100%; height: 100%; object-fit: cover;
+    
+    .auth-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.9);
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 13px;
     }
-    .auth-left-logo-container .logo-fallback {
-      font-size: 36px; font-weight: 900;
-      color: rgba(255,255,255,.6);
-      font-family: 'DM Sans', sans-serif;
+    
+    .auth-feature-item ion-icon {
+      font-size: 18px;
+      color: var(--accent-light);
     }
-    .auth-left-logo-container p {
-      font-size: 10px; color: rgba(255,255,255,.4);
-      margin-top: 6px; text-align: center;
-    }
+    
     .auth-left-tagline {
       text-align: center;
     }
+    
     .auth-left-tagline h2 {
       font-family: 'Playfair Display', serif;
       font-size: 22px;
       color: white;
       margin-bottom: 8px;
     }
+    
     .auth-left-tagline p {
       font-size: 14px;
       color: rgba(255,255,255,.55);
@@ -592,32 +599,49 @@
       overflow-y: auto;
       background: var(--cream);
     }
+    
     .auth-form-card {
       width: 100%;
       max-width: 400px;
     }
+    
     .auth-form-header {
       text-align: center;
       margin-bottom: 32px;
     }
+    
     .auth-form-header .auth-logo-mark {
-      width: 52px; height: 52px;
+      width: 52px; 
+      height: 52px;
       background: linear-gradient(135deg, var(--accent), var(--warm-brown));
       border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 20px; font-weight: 900;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      color: white; 
+      font-size: 20px; 
+      font-weight: 900;
       margin: 0 auto 16px;
       box-shadow: 0 8px 24px rgba(193,127,58,.3);
     }
-    .auth-form-header .auth-logo-mark ion-icon { font-size: 26px; }
+    
+    .auth-form-header .auth-logo-mark ion-icon { 
+      font-size: 26px; 
+    }
+    
     .auth-form-header h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 28px; font-weight: 700;
-      color: var(--text-dark); margin-bottom: 6px;
+      font-size: 28px; 
+      font-weight: 700;
+      color: var(--text-dark); 
+      margin-bottom: 6px;
     }
+    
     .auth-form-header p {
-      font-size: 13px; color: var(--text-light);
+      font-size: 13px; 
+      color: var(--text-light);
     }
+    
     .auth-error {
       background: var(--error-bg);
       color: var(--error);
@@ -628,11 +652,16 @@
       margin-bottom: 13px;
       display: none;
     }
-    .auth-error.show { display: block; }
+    
+    .auth-error.show { 
+      display: block; 
+    }
+    
     .auth-back-link {
       margin-top: 20px;
       text-align: center;
     }
+    
     .auth-back-link a {
       font-size: 13px;
       color: var(--text-light);
@@ -640,251 +669,32 @@
       text-decoration: none;
       transition: color .2s;
     }
-    .auth-back-link a:hover { color: var(--accent); }
+    
+    .auth-back-link a:hover { 
+      color: var(--accent); 
+    }
 
     @media (max-width: 640px) {
-      .auth-page-wrap { flex-direction: column; }
-      .auth-left-panel { width: 100%; min-width: 0; flex-direction: row; padding: 16px 20px; gap: 16px; justify-content: flex-start; }
-      .auth-left-logo-container { width: 52px; height: 52px; border-radius: 12px; }
-      .auth-left-logo-container .logo-fallback { font-size: 18px; }
-      .auth-left-logo-container p { display: none; }
-      .auth-left-tagline { display: none; }
+      .auth-page-wrap { 
+        flex-direction: column; 
+      }
+      .auth-left-panel { 
+        width: 100%; 
+        min-width: 0; 
+        flex-direction: row; 
+        padding: 16px 20px; 
+        gap: 16px; 
+        justify-content: flex-start; 
+      }
+      .auth-features-mini { 
+        display: none; 
+      }
+      .auth-left-tagline { 
+        display: none; 
+      }
     }
 
-    /* ========== BULK ATTENDANCE BUTTONS ========== */
-    .bulk-actions-chip {
-      display: flex;
-      gap: 6px;
-      padding: 0 4px;
-      border-left: 1px solid var(--border);
-    }
-    .bulk-btn {
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1.5px solid transparent;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all .15s;
-      white-space: nowrap;
-    }
-    .bulk-present { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
-    .bulk-present:hover { background: var(--success); color: white; }
-    .bulk-late { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
-    .bulk-late:hover { background: var(--warning); color: white; }
-    .bulk-absent { background: var(--error-bg); color: var(--error); border-color: var(--error-border); }
-    .bulk-absent:hover { background: var(--error); color: white; }
-
-    /* ========== GRADE TEMPLATES ========== */
-    .template-selector {
-      border-top: 1px solid var(--border-light);
-      padding-top: 16px;
-      margin-top: 8px;
-    }
-    .template-list { display: flex; flex-direction: column; gap: 6px; }
-    .template-item {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .template-apply-btn {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: flex-start;
-      background: var(--cream-2);
-      border: 1.5px solid var(--border-light);
-      border-radius: 9px;
-      padding: 8px 12px;
-      cursor: pointer;
-      transition: all .15s;
-      text-align: left;
-    }
-    .template-apply-btn:hover { border-color: var(--accent); background: var(--accent-light); }
-    .template-name { font-size: 13px; font-weight: 600; color: var(--text-dark); }
-    .template-cols { font-size: 11px; color: var(--text-light); margin-top: 2px; }
-    .template-del-btn {
-      width: 28px; height: 28px;
-      background: none; border: none;
-      color: var(--text-light); cursor: pointer;
-      border-radius: 6px; font-size: 16px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .template-del-btn:hover { background: var(--error-bg); color: var(--error); }
-
-    /* ========== LESSON NOTES PREVIEW ========== */
-    .lesson-notes-preview {
-      font-size: 11px;
-      color: var(--text-light);
-      margin-top: 4px;
-      font-style: italic;
-    }
-
-    /* ========== ATTENDANCE STREAK BADGE ========== */
-    .cc-streak-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-      border: 1px solid #f9ca24;
-      color: #e17055;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 99px;
-      margin-top: 8px;
-      letter-spacing: .3px;
-    }
-
-    /* ========== KEYBOARD SHORTCUT OVERLAY ========== */
-    .shortcut-hint {
-      position: fixed;
-      bottom: 72px;
-      right: 20px;
-      background: rgba(30, 24, 12, .95);
-      backdrop-filter: blur(12px);
-      border-radius: 14px;
-      padding: 16px 20px;
-      z-index: 9998;
-      font-size: 13px;
-      color: rgba(255,255,255,.85);
-      min-width: 220px;
-      border: 1px solid rgba(255,255,255,.1);
-      box-shadow: 0 12px 40px rgba(0,0,0,.4);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .shortcut-hint.show { opacity: 1; pointer-events: all; }
-    .shortcut-hint kbd {
-      background: rgba(255,255,255,.15);
-      border-radius: 5px;
-      padding: 2px 7px;
-      font-family: monospace;
-      font-size: 12px;
-      margin-right: 8px;
-      border: 1px solid rgba(255,255,255,.2);
-    }
-
-    /* ========== OLD AUTH CLEANUP ========== */
-    .file-upload-zone.drag-over .file-upload-label {
-      border-color: var(--accent);
-      background: var(--accent-light);
-      transform: scale(1.02);
-    }
-
-    .file-upload-label {
-      transition: all 0.2s ease;
-    }
-
-    /* AUTH */
-    #s-auth {
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      overflow-y: auto
-    }
-
-    .auth-container {
-      width: 100%;
-      max-width: 860px
-    }
-
-    .auth-logo-centered {
-      text-align: center;
-      margin-bottom: 24px
-    }
-
-    .auth-logo-mark {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, var(--accent), var(--warm-brown));
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 20px;
-      font-weight: 900;
-      margin: 0 auto 12px;
-    }
-
-    .auth-logo-mark ion-icon {
-      font-size: 28px;
-    }
-
-    .auth-logo-centered h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--text-dark)
-    }
-
-    .auth-logo-centered p {
-      font-size: 13px;
-      color: var(--text-light);
-      margin-top: 4px
-    }
-
-    .auth-tabs {
-      display: flex;
-      background: var(--cream-2);
-      border-radius: 11px;
-      padding: 4px;
-      margin-bottom: 0
-    }
-
-    .auth-tab {
-      flex: 1;
-      padding: 9px;
-      border: none;
-      background: transparent;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-light);
-      cursor: pointer;
-      transition: all .2s
-    }
-
-    .auth-tab.active {
-      background: white;
-      color: var(--text-dark);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .08)
-    }
-
-    .auth-track-wrap {
-      overflow: hidden;
-      border-radius: 0 0 20px 20px;
-      background: white;
-      border: 1px solid var(--border-light);
-      border-top: none
-    }
-
-    .auth-tabs-wrap {
-      background: white;
-      border: 1px solid var(--border-light);
-      border-bottom: none;
-      border-radius: 20px 20px 0 0;
-      padding: 16px 24px 0
-    }
-
-    .auth-track {
-      display: flex;
-      transition: transform .4s cubic-bezier(.4, 0, .2, 1);
-      width: 200%
-    }
-
-    .auth-panel {
-      width: 50%;
-      padding: 24px;
-      flex-shrink: 0
-    }
-
-    .auth-track.show-signup {
-      transform: translateX(-50%)
-    }
-
+    /* FORM INPUTS */
     .form-group {
       margin-bottom: 15px
     }
@@ -942,72 +752,9 @@
       box-shadow: 0 6px 24px rgba(193, 127, 58, .4)
     }
 
-    .auth-guest-btn {
-      width: 100%;
-      padding: 11px;
-      margin-top: 10px;
-      background: transparent;
-      border: 1.5px solid var(--border);
-      border-radius: 11px;
-      color: var(--text-mid);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all .2s
-    }
-
-    .auth-guest-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent)
-    }
-
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 12px 0 0
-    }
-
-    .auth-divider-line {
-      flex: 1;
-      height: 1px;
-      background: var(--border-light)
-    }
-
-    .auth-divider-text {
-      font-size: 11px;
-      color: var(--text-light)
-    }
-
-    .auth-error {
-      background: var(--error-bg);
-      color: var(--error);
-      border: 1px solid var(--error-border);
-      padding: 10px 14px;
-      border-radius: 9px;
-      font-size: 13px;
-      margin-bottom: 13px;
-      display: none
-    }
-
-    .auth-error.show {
-      display: block
-    }
-
-    .auth-back {
-      text-align: center;
-      margin-top: 14px
-    }
-
-    .auth-back a {
-      color: var(--accent);
-      font-size: 13px;
-      cursor: pointer
-    }
-
-    .auth-back a:hover {
-      text-decoration: underline
+    .auth-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
 
     /* TOPBAR */
@@ -1035,7 +782,6 @@
       color: var(--text-dark);
       cursor: pointer;
       text-decoration: none;
-      margin: 0 auto;
     }
 
     .logo-mark {
@@ -1083,6 +829,24 @@
       display: flex;
       gap: 8px;
       align-items: center
+    }
+
+    .sync-indicator {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--cream-2);
+      color: var(--text-mid);
+    }
+    
+    .sync-indicator.syncing {
+      background: var(--accent-light);
+      color: var(--accent-dark);
+    }
+    
+    .sync-indicator.error {
+      background: var(--error-bg);
+      color: var(--error);
     }
 
     .save-pill {
@@ -1397,6 +1161,21 @@
       margin-top: 2px
     }
 
+    .cc-streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+      border: 1px solid #f9ca24;
+      color: #e17055;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-top: 8px;
+      letter-spacing: .3px;
+    }
+
     .new-class-card {
       background: white;
       border: 2px dashed var(--border);
@@ -1436,6 +1215,58 @@
     .new-class-card:hover .new-class-plus {
       background: var(--accent);
       color: white
+    }
+
+    /* WELCOME CARD */
+    .welcome-card {
+      background: white;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    
+    .welcome-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .welcome-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    
+    .ws-num {
+      width: 28px; 
+      height: 28px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-weight: 700; 
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    
+    .ws-text {
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px;
+    }
+    
+    .ws-text strong { 
+      font-size: 14px; 
+      color: var(--text-dark); 
+    }
+    
+    .ws-text span { 
+      font-size: 12px; 
+      color: var(--text-light); 
     }
 
     /* TABS */
@@ -1535,6 +1366,23 @@
       margin-left: auto;
       display: flex;
       gap: 8px
+    }
+
+    .panel-search {
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 12px;
+      background: white;
+      color: var(--text-dark);
+      outline: none;
+      width: 160px;
+      transition: border-color 0.15s;
+    }
+    
+    .panel-search:focus { 
+      border-color: var(--accent); 
     }
 
     .panel-scroll {
@@ -1746,6 +1594,13 @@
       border: 1px solid var(--error-border)
     }
 
+    .lesson-notes-preview {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
     .lesson-arrow {
       color: var(--text-light);
       font-size: 16px;
@@ -1785,7 +1640,25 @@
       color: var(--error)
     }
 
-    /* IELTS MODE - SIMPLIFIED */
+    .lesson-status-dot {
+      font-size: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    
+    .lesson-status-dot.complete { 
+      color: var(--success); 
+    }
+    
+    .lesson-status-dot.partial  { 
+      color: var(--warning); 
+    }
+    
+    .lesson-status-dot.att-only { 
+      color: var(--border); 
+    }
+
+    /* IELTS MODE */
     .ielts-badge {
       display: inline-flex;
       align-items: center;
@@ -1965,6 +1838,57 @@
       border-radius: 50%
     }
 
+    .bulk-actions-chip {
+      display: flex;
+      gap: 6px;
+      padding: 0 4px;
+      border-left: 1px solid var(--border);
+    }
+    
+    .bulk-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid transparent;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    
+    .bulk-present { 
+      background: var(--success-bg); 
+      color: var(--success); 
+      border-color: var(--success-border); 
+    }
+    
+    .bulk-present:hover { 
+      background: var(--success); 
+      color: white; 
+    }
+    
+    .bulk-late { 
+      background: var(--warning-bg); 
+      color: var(--warning); 
+      border-color: var(--warning-border); 
+    }
+    
+    .bulk-late:hover { 
+      background: var(--warning); 
+      color: white; 
+    }
+    
+    .bulk-absent { 
+      background: var(--error-bg); 
+      color: var(--error); 
+      border-color: var(--error-border); 
+    }
+    
+    .bulk-absent:hover { 
+      background: var(--error); 
+      color: white; 
+    }
+
     .gradebook-scroll {
       flex: 1;
       overflow: auto
@@ -2106,44 +2030,62 @@
       padding: 0 12px
     }
 
-    .att-chip {
-      display: inline-flex;
+    /* ATTENDANCE TOGGLE - REDESIGNED */
+    .att-toggle {
+      display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
+      gap: 4px;
+      padding: 2px;
+      background: var(--cream-2);
+      border-radius: 40px;
+      width: fit-content;
+      border: 1px solid var(--border-light);
+    }
+
+    .att-opt {
+      width: 36px;
+      height: 30px;
+      border: none;
+      border-radius: 30px;
       cursor: pointer;
-      user-select: none;
-      transition: transform .1s, filter .1s;
-      white-space: nowrap
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      background: transparent;
+      color: var(--text-light);
     }
 
-    .att-chip:hover {
-      filter: brightness(.93)
+    .att-opt:first-child.active-p {
+      background: #2e7d32;
+      color: white;
+    }
+    
+    .att-opt:first-child:not(.active-p):hover {
+      background: #e8f5e8;
+      color: #2e7d32;
     }
 
-    .att-chip:active {
-      transform: scale(.94)
+    .att-opt:nth-child(2).active-l {
+      background: #ed6c02;
+      color: white;
+    }
+    
+    .att-opt:nth-child(2):not(.active-l):hover {
+      background: #fff3e0;
+      color: #ed6c02;
     }
 
-    .att-chip.present {
-      background: var(--success-bg);
-      color: var(--success);
-      border: 1px solid var(--success-border)
+    .att-opt:last-child.active-a {
+      background: #d32f2f;
+      color: white;
     }
-
-    .att-chip.late {
-      background: var(--warning-bg);
-      color: var(--warning);
-      border: 1px solid var(--warning-border)
-    }
-
-    .att-chip.absent {
-      background: var(--error-bg);
-      color: var(--error);
-      border: 1px solid var(--error-border)
+    
+    .att-opt:last-child:not(.active-a):hover {
+      background: #ffebee;
+      color: #d32f2f;
     }
 
     .grade-inp {
@@ -2172,6 +2114,30 @@
       opacity: 0.5;
       cursor: not-allowed;
       background: repeating-linear-gradient(45deg, #f9f9f9, #f9f9f9 10px, #f3f3f3 10px, #f3f3f3 20px)
+    }
+
+    .band-select {
+      width: 100%;
+      height: 48px;
+      border: none;
+      background: transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-dark);
+      padding: 0 8px;
+      outline: none;
+      cursor: pointer;
+      border-radius: 0;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 12px;
+    }
+
+    .band-select:focus {
+      background-color: var(--accent-light);
     }
 
     .add-student-row td {
@@ -2227,6 +2193,23 @@
       font-size: 11px;
       color: var(--text-light);
       margin-top: 3px
+    }
+
+    .analytics-chart-wrap {
+      background: white;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .analytics-chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .att-table {
@@ -2426,9 +2409,73 @@
       gap: 12px
     }
 
-    /* === body modal lock === */
-    body.modal-open {
-      overflow: hidden !important
+    /* TEMPLATES */
+    .template-selector {
+      border-top: 1px solid var(--border-light);
+      padding-top: 16px;
+      margin-top: 8px;
+    }
+    
+    .template-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 6px; 
+    }
+    
+    .template-item {
+      display: flex; 
+      align-items: center; 
+      gap: 8px;
+    }
+    
+    .template-apply-btn {
+      flex: 1;
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start;
+      background: var(--cream-2);
+      border: 1.5px solid var(--border-light);
+      border-radius: 9px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      text-align: left;
+    }
+    
+    .template-apply-btn:hover { 
+      border-color: var(--accent); 
+      background: var(--accent-light); 
+    }
+    
+    .template-name { 
+      font-size: 13px; 
+      font-weight: 600; 
+      color: var(--text-dark); 
+    }
+    
+    .template-cols { 
+      font-size: 11px; 
+      color: var(--text-light); 
+      margin-top: 2px; 
+    }
+    
+    .template-del-btn {
+      width: 28px; 
+      height: 28px;
+      background: none; 
+      border: none;
+      color: var(--text-light); 
+      cursor: pointer;
+      border-radius: 6px; 
+      font-size: 16px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+    }
+    
+    .template-del-btn:hover { 
+      background: var(--error-bg); 
+      color: var(--error); 
     }
 
     /* SHEET */
@@ -2672,6 +2719,35 @@
       }
     }
 
+    .toast-undo {
+      display: flex !important;
+      align-items: center;
+      gap: 12px;
+      bottom: 28px;
+      padding: 12px 18px;
+      font-size: 13px;
+      max-width: 340px;
+      pointer-events: all !important;
+      position: fixed !important;
+    }
+    
+    .toast-undo-btn {
+      background: white;
+      color: var(--accent);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      pointer-events: all;
+    }
+    
+    .toast-undo-btn:hover { 
+      background: var(--cream-2); 
+    }
+
     .confirm-modal {
       max-width: 360px
     }
@@ -2716,7 +2792,7 @@
       animation: fadeUp .2s ease forwards
     }
 
-    /* Export Modal - Better Layout */
+    /* EXPORT MODAL */
     .export-btn {
       display: flex;
       align-items: center;
@@ -2783,7 +2859,7 @@
       color: var(--accent-dark)
     }
 
-    /* File Upload */
+    /* FILE UPLOAD */
     .file-upload-zone {
       margin-top: 8px
     }
@@ -2872,7 +2948,7 @@
       color: white
     }
 
-    /* VS Code Color Picker */
+    /* COLOR PICKER */
     .color-picker-container {
       margin-top: 12px
     }
@@ -3040,6 +3116,73 @@
       font-family: 'Courier New', monospace
     }
 
+    /* DEMO MODAL */
+    .demo-contact-info {
+      background: var(--cream-2); 
+      padding: 20px; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+      text-align: center;
+    }
+
+    /* SETTINGS PAGE */
+    #s-settings .screen-body {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* OFFLINE BANNER */
+    .offline-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: var(--warning);
+      color: white;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* KEYBOARD SHORTCUT HINT */
+    .shortcut-hint {
+      position: fixed;
+      bottom: 72px;
+      right: 20px;
+      background: rgba(30, 24, 12, .95);
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 16px 20px;
+      z-index: 9998;
+      font-size: 13px;
+      color: rgba(255,255,255,.85);
+      min-width: 220px;
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 12px 40px rgba(0,0,0,.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .shortcut-hint.show { 
+      opacity: 1; 
+      pointer-events: all; 
+    }
+    
+    .shortcut-hint kbd {
+      background: rgba(255,255,255,.15);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-right: 8px;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
     /* MOBILE RESPONSIVENESS */
     @media (max-width: 768px) {
       .land-nav {
@@ -3172,195 +3315,7 @@
       }
     }
 
-    /* ── Attendance 3-button toggle (colored balls with animation) ─ */
-    .att-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px;
-    }
-    .att-opt {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2.5px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      position: relative;
-      overflow: hidden;
-      background: var(--cream-2);
-      color: transparent;
-    }
-    .att-opt::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      transform: scale(0);
-      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
-    }
-    /* Present = green ball */
-    .att-opt:first-child::before { background: radial-gradient(circle at 35% 30%, #8dc47e, var(--success)); }
-    .att-opt:first-child::after { content: '✓'; position:absolute; font-size:15px; font-weight:800; color:white; opacity:0; transition: opacity .2s; }
-    /* Late = amber ball */
-    .att-opt:nth-child(2)::before { background: radial-gradient(circle at 35% 30%, #f5c96a, var(--warning)); }
-    .att-opt:nth-child(2)::after { content: '⏰'; position:absolute; font-size:13px; opacity:0; transition: opacity .2s; }
-    /* Absent = red ball */
-    .att-opt:last-child::before { background: radial-gradient(circle at 35% 30%, #e87b7b, var(--error)); }
-    .att-opt:last-child::after { content: '✕'; position:absolute; font-size:14px; font-weight:800; color:white; opacity:0; transition: opacity .2s; }
-
-    .att-opt:hover { transform: scale(1.15); border-color: var(--border); }
-    .att-opt:hover::before { transform: scale(0.5); }
-
-    .att-opt.active-p {
-      border-color: var(--success);
-      background: transparent;
-      transform: scale(1.1);
-      box-shadow: 0 4px 14px rgba(90,138,90,.4);
-    }
-    .att-opt.active-p::before { transform: scale(1); }
-    .att-opt.active-p::after { opacity: 1; }
-
-    .att-opt.active-l {
-      border-color: var(--warning);
-      background: transparent;
-      transform: scale(1.1);
-      box-shadow: 0 4px 14px rgba(184,112,32,.4);
-    }
-    .att-opt.active-l::before { transform: scale(1); }
-    .att-opt.active-l::after { opacity: 1; }
-
-    .att-opt.active-a {
-      border-color: var(--error);
-      background: transparent;
-      transform: scale(1.1);
-      box-shadow: 0 4px 14px rgba(192,64,64,.4);
-    }
-    .att-opt.active-a::before { transform: scale(1); }
-    .att-opt.active-a::after { opacity: 1; }
-
-    /* ── Offline banner ─────────────────────────────────── */
-    .offline-banner {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-      background: var(--warning);
-      color: white;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-
-    /* ── Undo toast ─────────────────────────────────────── */
-    .toast-undo {
-      display: flex !important;
-      align-items: center;
-      gap: 12px;
-      bottom: 28px;
-      padding: 12px 18px;
-      font-size: 13px;
-      max-width: 340px;
-      pointer-events: all !important;
-      position: fixed !important;
-    }
-    .toast-undo-btn {
-      background: white;
-      color: var(--accent);
-      border: none;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      flex-shrink: 0;
-      pointer-events: all;
-    }
-    .toast-undo-btn:hover { background: var(--cream-2); }
-
-    /* ── Welcome card ───────────────────────────────────── */
-    .welcome-card {
-      background: white;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 28px 24px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow);
-    }
-    .welcome-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .welcome-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-    }
-    .ws-num {
-      width: 28px; height: 28px;
-      background: var(--accent);
-      color: white;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 13px;
-      flex-shrink: 0;
-    }
-    .ws-text {
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .ws-text strong { font-size: 14px; color: var(--text-dark); }
-    .ws-text span { font-size: 12px; color: var(--text-light); }
-
-    /* ── Lesson status dots ─────────────────────────────── */
-    .lesson-status-dot {
-      font-size: 10px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-    .lesson-status-dot.complete { color: var(--success); }
-    .lesson-status-dot.partial  { color: var(--warning); }
-    .lesson-status-dot.att-only { color: var(--border); }
-
-    /* ── Search inputs in panel headers ─────────────────── */
-    .panel-search {
-      height: 32px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0 10px;
-      font-size: 12px;
-      background: white;
-      color: var(--text-dark);
-      outline: none;
-      width: 160px;
-      transition: border-color 0.15s;
-    }
-    .panel-search:focus { border-color: var(--accent); }
-
-    /* ── Analytics chart ────────────────────────────────── */
-    .analytics-chart-wrap {
-      background: white;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-    .analytics-chart-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-mid);
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* ── Print styles ───────────────────────────────────── */
+    /* Print styles */
     @media print {
       body * { visibility: hidden; }
       #s-lesson, #s-lesson * { visibility: visible; }
@@ -3372,31 +3327,9 @@
       .att-toggle .att-opt { border: none; padding: 2px 4px; }
       .grade-inp { border: none !important; background: transparent !important; }
     }
-
-    /* ── Keyboard shortcut hint ─────────────────────────── */
-    .shortcut-hint {
-      position: fixed;
-      bottom: 20px; right: 20px;
-      background: rgba(44,36,22,0.8);
-      color: white;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 11px;
-      line-height: 1.8;
-      z-index: 100;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .shortcut-hint.show { opacity: 1; }
-    .shortcut-hint kbd {
-      background: rgba(255,255,255,0.2);
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-family: monospace;
-    }
   </style>
 </head>
+
 <body>
 
   <!-- SPLASH -->
@@ -3426,8 +3359,8 @@
         GradeJournal
       </div>
       <div class="land-nav-btns">
-        <button class="btn-ghost" onclick="showAuth('signin')">Log In</button>
-        <button class="btn-primary" onclick="openDemoRequest()">Request Demo →</button>
+        <button class="btn-ghost" onclick="showAuth()">Log In</button>
+        <button class="btn-primary" onclick="openOv('ov-demo')">Request Demo →</button>
         <button class="btn-ghost" onclick="showContact()">Contact</button>
       </div>
     </nav>
@@ -3437,8 +3370,8 @@
       <p>Organize classrooms, track attendance, record grades — with IELTS mode, bulk operations, and professional
         exports.</p>
       <div class="hero-cta">
-        <button class="btn-primary btn-xl" onclick="showAuth('signin')">Log In →</button>
-        <button class="btn-ghost btn-xl" onclick="openDemoRequest()">Request Demo</button>
+        <button class="btn-primary btn-xl" onclick="showAuth()">Log In →</button>
+        <button class="btn-ghost btn-xl" onclick="openOv('ov-demo')">Request Demo</button>
       </div>
     </section>
     <div class="land-features">
@@ -3476,65 +3409,68 @@
     <div class="land-cta-band">
       <h2>Ready to teach smarter?</h2>
       <p>Join educators who trust GradeJournal to keep their classrooms organized.</p>
-      <button class="btn-primary btn-xl" onclick="openDemoRequest()" style="background:white;color:var(--accent-dark);box-shadow:none">Request Demo →</button>
+      <button class="btn-primary btn-xl" onclick="openOv('ov-demo')" style="background:white;color:var(--accent-dark);box-shadow:none">Request Demo →</button>
     </div>
     <footer class="land-footer">© 2026 GradeJournal — Made for professional educators</footer>
   </div>
 
-<!-- AUTH - REDESIGNED PROFESSIONAL -->
-<div id="s-auth" class="screen">
-  <div class="auth-page-wrap">
-    <!-- Left panel: Logo / branding -->
-    <div class="auth-left-panel">
-      <div class="auth-brand">
-        <div class="auth-brand-icon">
-          <ion-icon name="school-outline"></ion-icon>
-        </div>
-        <div class="auth-brand-name">GradeJournal</div>
-      </div>
-      <div class="auth-left-logo-container" id="auth-logo-container">
-        <div class="logo-fallback">GJ</div>
-        <p>Your school logo appears here</p>
-      </div>
-      <div class="auth-left-tagline">
-        <h2>Teaching is hard enough.</h2>
-        <p>Your gradebook shouldn't be.</p>
-      </div>
-    </div>
-    <!-- Right panel: Form -->
-    <div class="auth-right-panel">
-      <div class="auth-form-card">
-        <div class="auth-form-header">
-          <div class="auth-logo-mark">
+  <!-- AUTH PAGE - LOGIN ONLY -->
+  <div id="s-auth" class="screen">
+    <div class="auth-page-wrap">
+      <!-- Left panel: Features -->
+      <div class="auth-left-panel">
+        <div class="auth-brand">
+          <div class="auth-brand-icon">
             <ion-icon name="school-outline"></ion-icon>
           </div>
-          <h2>Welcome back</h2>
-          <p id="auth-tagline">Log in to your GradeJournal account</p>
+          <div class="auth-brand-name">GradeJournal</div>
         </div>
-
-        <div id="err-signin" class="auth-error"></div>
-
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" class="form-input" id="si-email" placeholder="teacher@school.com" autocomplete="email">
+        
+        <div class="auth-features-mini" id="auth-features-container">
+          <!-- Will be populated by JavaScript -->
         </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" class="form-input" id="si-password" placeholder="••••••••"
-            onkeydown="if(event.key==='Enter')authSubmit('signin')" autocomplete="current-password">
+        
+        <div class="auth-left-tagline">
+          <h2>Teaching is hard enough.</h2>
+          <p>Your gradebook shouldn't be.</p>
         </div>
+      </div>
+      
+      <!-- Right panel: Login Form -->
+      <div class="auth-right-panel">
+        <div class="auth-form-card">
+          <div class="auth-form-header">
+            <div class="auth-logo-mark">
+              <ion-icon name="school-outline"></ion-icon>
+            </div>
+            <h2>Welcome back</h2>
+            <p>Log in to your GradeJournal account</p>
+          </div>
 
-        <button class="auth-submit" id="tab-signin" onclick="authSubmit('signin')">
-          Log In to GradeJournal →
-        </button>
+          <div id="err-signin" class="auth-error"></div>
 
-        <div class="auth-back-link">
-          <a onclick="showLanding()">← Back to homepage</a>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" class="form-input" id="si-email" placeholder="teacher@school.com" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-input" id="si-password" placeholder="••••••••"
+              onkeydown="if(event.key==='Enter')authSubmit()" autocomplete="current-password">
+          </div>
+
+          <button class="auth-submit" id="signin-btn" onclick="authSubmit()">
+            Log In →
+          </button>
+
+          <div class="auth-back-link">
+            <a onclick="showLanding()">← Back to homepage</a>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+
   <!-- HOME -->
   <div id="s-home" class="screen">
     <div class="topbar">
@@ -3568,6 +3504,62 @@
           </svg>New Classroom</button>
       </div>
       <div class="classrooms-grid" id="classrooms-grid"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div id="s-settings" class="screen slide-right">
+    <div class="topbar">
+      <button class="back-btn" onclick="goHome()">
+        <ion-icon name="arrow-back-outline"></ion-icon>Back
+      </button>
+      <span class="topbar-crumb active">Settings</span>
+    </div>
+    
+    <div class="screen-body">
+      <div style="background: white; border-radius: 20px; padding: 24px; margin-bottom: 16px;">
+        <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 20px;">Profile Settings</h3>
+        
+        <div class="fg">
+          <label class="flabel">Your Name</label>
+          <input class="finput" id="settings-name" value="">
+        </div>
+        
+        <div class="fg">
+          <label class="flabel">School/Institution</label>
+          <input class="finput" id="settings-school" value="">
+        </div>
+        
+        <div class="fg">
+          <label class="flabel">Your Role</label>
+          <select class="fselect" id="settings-role">
+            <option value="teacher">Teacher</option>
+            <option value="professor">Professor</option>
+            <option value="tutor">Tutor</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+        
+        <button class="btn btn-primary" style="width: 100%;" onclick="saveSettings()">
+          Save Changes
+        </button>
+      </div>
+      
+      <div style="background: white; border-radius: 20px; padding: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 20px;">Data Management</h3>
+        
+        <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="backupData()">
+          💾 Download Backup
+        </button>
+        
+        <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="restoreFromFile()">
+          📂 Restore from Backup
+        </button>
+        
+        <button class="btn btn-secondary" style="width: 100%;" onclick="openExportSettings()">
+          🎨 Export Settings
+        </button>
+      </div>
     </div>
   </div>
 
@@ -3606,7 +3598,7 @@
           <div class="panel-hdr-count" id="students-count">0</div>
           <div class="panel-hdr-right">
             <input class="panel-search" placeholder="🔍 Search students…" oninput="filterStudents(this.value)" id="student-search-inp">
-            <button class="btn btn-primary btn-sm" onclick="openAddStudent()"> Add Student</button>
+            <button class="btn btn-primary btn-sm" onclick="openAddStudent()">Add Student</button>
           </div>
         </div>
         <div class="panel-scroll" id="students-list"></div>
@@ -3617,7 +3609,7 @@
           <div class="panel-hdr-count" id="lessons-count">0</div>
           <div class="panel-hdr-right">
             <input class="panel-search" placeholder="🔍 Search lessons…" oninput="filterLessons(this.value)">
-            <button class="btn btn-primary btn-sm" onclick="openAddLesson()"> New Lesson</button>
+            <button class="btn btn-primary btn-sm" onclick="openAddLesson()">New Lesson</button>
           </div>
         </div>
         <div class="panel-scroll">
@@ -3649,7 +3641,7 @@
             <polyline points="20 6 9 17 4 12" />
           </svg>Saved</div>
         <button class="btn btn-secondary btn-sm" onclick="openLessonNotes()" id="add-notes-btn">📝 Notes</button>
-        <button class="btn btn-secondary btn-sm" onclick="openAddColumn()" id="add-col-btn"> Column</button>
+        <button class="btn btn-secondary btn-sm" onclick="openAddColumn()" id="add-col-btn">Column</button>
         <button class="btn btn-primary btn-sm" onclick="exportLesson()"><svg width="12" height="12" fill="none"
             stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -3668,6 +3660,64 @@
         <thead id="gb-head"></thead>
         <tbody id="gb-body"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- CONTACT PAGE -->
+  <div id="s-contact" class="screen">
+    <div class="topbar">
+      <button class="back-btn" onclick="showLanding()">
+        <ion-icon name="arrow-back-outline"></ion-icon> Back
+      </button>
+      <div class="topbar-logo">
+        <div class="logo-mark"><ion-icon name="school-outline"></ion-icon></div>
+        GradeJournal
+      </div>
+    </div>
+    
+    <div class="screen-body" style="display: flex; align-items: center; justify-content: center;">
+      <div style="max-width: 600px; width: 100%; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div style="font-size: 48px; color: var(--accent); margin-bottom: 16px;">
+            <ion-icon name="mail-outline"></ion-icon>
+          </div>
+          <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 8px;">Get in Touch</h1>
+          <p style="color: var(--text-light);">We're here to help with any questions</p>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          <!-- Email Card -->
+          <div style="background: white; border-radius: 20px; padding: 32px; border: 1px solid var(--border-light); box-shadow: var(--shadow); text-align: center;">
+            <div style="width: 64px; height: 64px; background: var(--accent-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+              <ion-icon name="mail-outline" style="font-size: 32px; color: var(--accent);"></ion-icon>
+            </div>
+            <h2 style="font-size: 20px; margin-bottom: 8px;">Email Us</h2>
+            <p style="color: var(--text-light); margin-bottom: 20px;">We typically respond within 24 hours</p>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=eshmurodov.moon1508@gmail.com&su=GradeJournal%20Inquiry" 
+               target="_blank" 
+               class="btn btn-primary" 
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; font-size: 16px; text-decoration: none;">
+              <ion-icon name="logo-google"></ion-icon>
+              Open in Gmail
+            </a>
+            <p style="margin-top: 16px; font-size: 13px; color: var(--text-light);">
+              eshmurodov.moon1508@gmail.com
+            </p>
+          </div>
+          
+          <!-- Phone Card -->
+          <div style="background: white; border-radius: 20px; padding: 32px; border: 1px solid var(--border-light); box-shadow: var(--shadow); text-align: center;">
+            <div style="width: 64px; height: 64px; background: var(--cream-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+              <ion-icon name="call-outline" style="font-size: 32px; color: var(--text-light);"></ion-icon>
+            </div>
+            <h2 style="font-size: 20px; margin-bottom: 8px;">Call Us</h2>
+            <p style="color: var(--text-light); margin-bottom: 20px;">Available Mon-Fri, 9am-6pm</p>
+            <div style="font-size: 18px; font-weight: 600; color: var(--text-dark); padding: 14px 28px; background: var(--cream-2); border-radius: 99px; display: inline-block;">
+              998 91 404 54 69
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3772,14 +3822,10 @@
           placeholder="e.g. Quiz 1, Midterm, Oral..." onkeydown="ifEnter(event,saveColumn)"></div>
       <div class="modal-foot"><button class="btn btn-ghost-app" onclick="closeOv('ov-column')">Cancel</button><button
           class="btn btn-primary" onclick="saveColumn()">Add Column</button></div>
-      <!-- Template Selector -->
-      <div class="template-selector" id="template-selector">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:8px">Or Apply a Template</div>
-      </div>
+      <div class="template-selector" id="template-selector"></div>
     </div>
   </div>
 
-  <!-- LESSON NOTES MODAL -->
   <div class="ov" id="ov-lesson-notes">
     <div class="modal">
       <div class="modal-hdr">
@@ -3859,6 +3905,9 @@
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-ghost-app" style="width:100%;justify-content:center" onclick="openSettings()">
+          ⚙️ Settings
+        </button>
         <button class="btn btn-ghost-app" style="width:100%;justify-content:center"
           onclick="closeOv('ov-user')">Close</button>
         <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="signOut()">Sign Out</button>
@@ -3981,7 +4030,7 @@
     </div>
   </div>
 
-  <!-- DEMO REQUEST MODAL -->
+  <!-- DEMO MODAL - FIXED EMAIL -->
   <div class="ov" id="ov-demo">
     <div class="modal">
       <div class="modal-hdr">
@@ -3992,9 +4041,11 @@
         </div>
       </div>
       
-      <div class="demo-contact-info" style="background: var(--cream-2); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+      <div class="demo-contact-info">
         <div style="font-size: 16px; font-weight: 600; color: var(--text-dark); margin-bottom: 8px;">📧 Send us an email</div>
-        <div style="font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 4px;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="fb9e8893968e89949f948dd596949495cacecbc3bb9c969a9297d5989496">[email&#160;protected]</a></div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 4px;">
+          eshmurodov.moon1508@gmail.com
+        </div>
         <div style="font-size: 13px; color: var(--text-light);">Please include your name, school, and a brief message</div>
       </div>
       
@@ -4065,7 +4116,7 @@
       <div style="background: var(--cream-2); padding: 16px; border-radius: 12px; margin: 16px 0;">
         <p style="font-size: 13px; color: var(--text-mid); display: flex; align-items: center; gap: 8px;">
           <ion-icon name="information-circle-outline" style="font-size: 18px; color: var(--accent);"></ion-icon>
-          This information will be used in your exports and profile. You can change it later.
+          This information will be used in your exports and profile. You can change it later in Settings.
         </p>
       </div>
       
@@ -4075,71 +4126,7 @@
     </div>
   </div>
 
-  <!-- CONTACT PAGE -->
-  <div id="s-contact" class="screen">
-    <div class="topbar">
-      <button class="back-btn" onclick="showLanding()">
-        <ion-icon name="arrow-back-outline"></ion-icon> Back
-      </button>
-      <div class="topbar-logo">
-        <div class="logo-mark"><ion-icon name="school-outline"></ion-icon></div>
-        GradeJournal
-      </div>
-    </div>
-    
-    <div class="screen-body" style="display: flex; align-items: center; justify-content: center;">
-      <div style="max-width: 600px; width: 100%; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 40px;">
-          <div style="font-size: 48px; color: var(--accent); margin-bottom: 16px;">
-            <ion-icon name="mail-outline"></ion-icon>
-          </div>
-          <h1 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 8px;">Get in Touch</h1>
-          <p style="color: var(--text-light);">We're here to help with any questions</p>
-        </div>
-        
-        <div style="display: flex; flex-direction: column; gap: 24px;">
-          <!-- Email Card -->
-          <div style="background: white; border-radius: 20px; padding: 32px; border: 1px solid var(--border-light); box-shadow: var(--shadow); text-align: center;">
-            <div style="width: 64px; height: 64px; background: var(--accent-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-              <ion-icon name="mail-outline" style="font-size: 32px; color: var(--accent);"></ion-icon>
-            </div>
-            <h2 style="font-size: 20px; margin-bottom: 8px;">Email Us</h2>
-            <p style="color: var(--text-light); margin-bottom: 20px;">We typically respond within 24 hours</p>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=eshmurodov.moon1508@gmail.com&su=GradeJournal%20Inquiry" 
-               target="_blank" 
-               class="btn btn-primary" 
-               style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; font-size: 16px; text-decoration: none;">
-              <ion-icon name="logo-google"></ion-icon>
-              Open in Gmail
-            </a>
-            <p style="margin-top: 16px; font-size: 13px; color: var(--text-light);">
-              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6702140f0a121508030811490a0808095652575f27000a060e0b4904080a"><span class="__cf_email__" data-cfemail="0663756e6b737469626970286b6969683733363e46616b676f6a2865696b">[email&#160;protected]</span></a>
-            </p>
-          </div>
-          
-          <!-- Phone Card -->
-          <div style="background: white; border-radius: 20px; padding: 32px; border: 1px solid var(--border-light); box-shadow: var(--shadow); text-align: center;">
-            <div style="width: 64px; height: 64px; background: var(--cream-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-              <ion-icon name="call-outline" style="font-size: 32px; color: var(--text-light);"></ion-icon>
-            </div>
-            <h2 style="font-size: 20px; margin-bottom: 8px;">Call Us</h2>
-            <p style="color: var(--text-light); margin-bottom: 20px;">Available Mon-Fri, 9am-6pm</p>
-            <div style="font-size: 18px; font-weight: 600; color: var(--text-dark); padding: 14px 28px; background: var(--cream-2); border-radius: 99px; display: inline-block;">
-              998 91 404 54 69
-            </div>
-          </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 40px;">
-          <a href="#" style="color: var(--accent); text-decoration: none; font-weight: 500;" onclick="event.preventDefault(); alert('FAQ coming soon!');">
-            <ion-icon name="help-circle-outline" style="margin-right: 4px;"></ion-icon>
-            Visit our FAQ
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <!-- SHEET -->
   <div class="sheet-ov" id="sheet-ov" onclick="closeSheetIfBg(event)">
     <div class="sheet" id="sheet-content"></div>
   </div>
