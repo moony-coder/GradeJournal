@@ -1,11 +1,12 @@
 'use strict';
 
+// Importing required modules
 const express = require('express');
+const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
 const compression = require('compression');
 const ExcelJS = require('exceljs');
 require('dotenv').config();
@@ -14,57 +15,62 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// ─── Security ───────────────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
-        "'unsafe-eval'",
-        'cdnjs.cloudflare.com', 
-        'cdn.jsdelivr.net',
-        'fonts.googleapis.com',
-        'unpkg.com'
-      ],
-      styleSrc: [
-        "'self'", 
-        "'unsafe-inline'", 
-        'fonts.googleapis.com', 
-        'cdnjs.cloudflare.com',
-        'cdn.jsdelivr.net'
-      ],
-      fontSrc: [
-        "'self'", 
-        'fonts.gstatic.com', 
-        'fonts.googleapis.com',
-        'cdn.jsdelivr.net',
-        'cdnjs.cloudflare.com'
-      ],
-      imgSrc: [
-        "'self'", 
-        'data:', 
-        'blob:',
-        'cdn.jsdelivr.net',
-        'cdnjs.cloudflare.com'
-      ],
-      connectSrc: [
-        "'self'", 
-        '*.supabase.co', 
-        'wss://*.supabase.co',
-        'https://cdn.jsdelivr.net',
-        'https://cdnjs.cloudflare.com',
-        'https://fonts.googleapis.com',
-        'https://fonts.gstatic.com'
-      ],
-      frameSrc: ["'none'"],
-      objectSrc: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+// Setting custom CSP headers - EXACT pattern you showed
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: [
+      "'self'", 
+      "'unsafe-inline'", 
+      "'unsafe-eval'",
+      "cdnjs.cloudflare.com", 
+      "cdn.jsdelivr.net",
+      "fonts.googleapis.com",
+      "unpkg.com"
+    ],
+    styleSrc: [
+      "'self'", 
+      "'unsafe-inline'", 
+      "fonts.googleapis.com", 
+      "cdnjs.cloudflare.com",
+      "cdn.jsdelivr.net"
+    ],
+    fontSrc: [
+      "'self'", 
+      "fonts.gstatic.com", 
+      "fonts.googleapis.com",
+      "cdn.jsdelivr.net",
+      "cdnjs.cloudflare.com"
+    ],
+    imgSrc: [
+      "'self'", 
+      "data:", 
+      "blob:",
+      "cdn.jsdelivr.net",
+      "cdnjs.cloudflare.com"
+    ],
+    connectSrc: [
+      "'self'", 
+      "*.supabase.co", 
+      "wss://*.supabase.co",
+      "https://cdn.jsdelivr.net",
+      "https://cdnjs.cloudflare.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
+    ],
+    frameSrc: ["'none'"],
+    objectSrc: ["'none'"],
+    workerSrc: ["'self'", "blob:"],
+  }
 }));
+
+// Other security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
 
 app.use(compression());
 
@@ -339,6 +345,11 @@ app.post('/api/export/excel', async (req, res) => {
   }
 });
 
+// Serve static files or other routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(staticDir, 'index.html'));
+});
+
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
@@ -356,6 +367,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Running the server
 const server = app.listen(PORT, () => {
   console.log(`✅ GradeJournal v6.1 running on port ${PORT}`);
   console.log(`📊 Excel exports: ExcelJS`);
