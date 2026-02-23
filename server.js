@@ -132,7 +132,7 @@ function validateClassData(data) {
   return errors;
 }
 
-// ─── Excel export (shared payload builder) ───────────────────────────────────
+// ─── Excel export helpers ───────────────────────────────────────────────────
 function styleHeaderRow(row, accentArgb) {
   row.eachCell(cell => {
     cell.font = { bold: true, color: { argb: 'FFFFFF' }, name: 'Calibri', size: 11 };
@@ -179,8 +179,7 @@ app.post('/api/export/excel', async (req, res) => {
       return res.status(400).json({ error: 'Invalid export type' });
     }
 
-    // Parse accent color
-    let accentArgb = 'FFC17F3A'; // default warm gold
+    let accentArgb = 'FFC17F3A';
     if (data.accentColor) {
       const m = data.accentColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
       if (m) accentArgb = hslToArgb(+m[1], +m[2], +m[3]);
@@ -200,8 +199,8 @@ app.post('/api/export/excel', async (req, res) => {
         views: [{ state: 'frozen', xSplit: 1, ySplit: 5 }],
       });
 
-      // ── Title block ──
       const colCount = data.columns.length + 2;
+      
       ws.mergeCells(1, 1, 1, colCount);
       const titleCell = ws.getCell('A1');
       titleCell.value = `${data.className}  ·  ${data.lessonName}`;
@@ -219,34 +218,30 @@ app.post('/api/export/excel', async (req, res) => {
       ws.mergeCells(3, 1, 3, colCount);
       ws.getRow(3).height = 8;
 
-      // Attendance summary row
       const present = data.rows.filter(r => r.attendance === 'present').length;
-      const late    = data.rows.filter(r => r.attendance === 'late').length;
-      const absent  = data.rows.filter(r => r.attendance === 'absent').length;
-      const total   = data.rows.length;
-      const rate    = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
+      const late = data.rows.filter(r => r.attendance === 'late').length;
+      const absent = data.rows.filter(r => r.attendance === 'absent').length;
+      const total = data.rows.length;
+      const rate = total > 0 ? Math.round(((present + late) / total) * 100) : 100;
 
       ws.mergeCells(4, 1, 4, colCount);
-      ws.getCell('A4').value = `📊 Attendance: ${rate}% attendance rate  |  ✅ Present: ${present}  ·  ⏰ Late: ${late}  ·  ❌ Absent: ${absent}`;
+      ws.getCell('A4').value = `📊 Attendance: ${rate}%  |  ✅ Present: ${present}  ·  ⏰ Late: ${late}  ·  ❌ Absent: ${absent}`;
       ws.getCell('A4').font = { name: 'Calibri', size: 10, color: { argb: 'FF5C4A2A' } };
       ws.getCell('A4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF0DC' } };
       ws.getRow(4).height = 22;
 
-      // ── Header row ──
       const headerRow = ws.getRow(5);
       headerRow.getCell(1).value = 'Student';
       headerRow.getCell(2).value = 'Attendance';
       data.columns.forEach((col, i) => { headerRow.getCell(i + 3).value = col; });
       styleHeaderRow(headerRow, accentArgb);
 
-      // ── Data rows ──
       data.rows.forEach((row, idx) => {
         const exRow = ws.getRow(idx + 6);
         exRow.getCell(1).value = row.studentName || '';
         const att = (row.attendance || 'present');
         exRow.getCell(2).value = att.charAt(0).toUpperCase() + att.slice(1);
 
-        // Color attendance cell
         const attColors = { present: 'FFE8F5E9', late: 'FFFFF3E0', absent: 'FFFFEBEE' };
         const attFontColors = { present: 'FF2E7D32', late: 'FFE65100', absent: 'FFC62828' };
         exRow.getCell(2).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: attColors[att] || 'FFFFFFFF' } };
@@ -256,7 +251,6 @@ app.post('/api/export/excel', async (req, res) => {
           exRow.getCell(ci + 3).value = grade || '';
         });
 
-        // Style all cells
         for (let c = 1; c <= colCount; c++) {
           const cell = exRow.getCell(c);
           if (c !== 2) styleDataCell(cell, idx % 2 === 1);
@@ -268,13 +262,11 @@ app.post('/api/export/excel', async (req, res) => {
         exRow.height = 26;
       });
 
-      // ── Column widths ──
       ws.getColumn(1).width = 28;
       ws.getColumn(2).width = 14;
       for (let c = 3; c <= colCount; c++) ws.getColumn(c).width = 14;
 
     } else {
-      // ── Class export ──
       const errors = validateClassData(data);
       if (errors.length) return res.status(400).json({ error: errors.join(', ') });
 
@@ -347,7 +339,6 @@ app.post('/api/export/excel', async (req, res) => {
   }
 });
 
-// ─── 404 & error handlers ─────────────────────────────────────────────────────
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
@@ -365,7 +356,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ─── Start ───────────────────────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
   console.log(`✅ GradeJournal v6.1 running on port ${PORT}`);
   console.log(`📊 Excel exports: ExcelJS`);
@@ -375,4 +365,4 @@ const server = app.listen(PORT, () => {
 });
 
 process.on('SIGTERM', () => { server.close(() => process.exit(0)); });
-process.on('SIGINT',  () => { server.close(() => process.exit(0)); });
+process.on('SIGINT', () => { server.close(() => process.exit(0)); });
