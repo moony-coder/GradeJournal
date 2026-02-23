@@ -499,66 +499,273 @@
       font-size: 13px
     }
 
-    /* ========== FIXED MODAL HEIGHT ========== */
-    .modal {
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 30px !important;
-    }
+    /* ========== MODAL HEIGHT ========== */
 
     .ov {
       align-items: center;
       justify-content: center;
     }
 
-    /* ========== AUTH LOGO BESIDE FORM ========== */
-    .auth-split {
+    /* ========== AUTH - REDESIGNED ========== */
+    #s-auth {
+      padding: 0;
+      overflow: hidden;
+    }
+    .auth-page-wrap {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+    .auth-left-panel {
+      width: 340px;
+      min-width: 260px;
+      background: linear-gradient(160deg, var(--text-dark) 0%, var(--warm-brown) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 32px;
+      gap: 32px;
+      flex-shrink: 0;
+    }
+    .auth-brand {
       display: flex;
       align-items: center;
-      gap: 32px;
-      padding: 8px 0;
+      gap: 12px;
+      color: white;
     }
-
-    .auth-split-logo {
-      flex-shrink: 0;
-      width: 140px;
+    .auth-brand-icon {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,.15);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+    }
+    .auth-brand-icon ion-icon { color: white; }
+    .auth-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: white;
+    }
+    .auth-left-logo-container {
+      width: 120px; height: 120px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(255,255,255,.12);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      border: 2px solid rgba(255,255,255,.2);
+    }
+    .auth-left-logo-container img.auth-logo-img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .auth-left-logo-container .logo-fallback {
+      font-size: 36px; font-weight: 900;
+      color: rgba(255,255,255,.6);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .auth-left-logo-container p {
+      font-size: 10px; color: rgba(255,255,255,.4);
+      margin-top: 6px; text-align: center;
+    }
+    .auth-left-tagline {
       text-align: center;
     }
-
-    .auth-split-logo img {
-      width: 100%;
-      height: auto;
-      border-radius: 16px;
-      box-shadow: var(--shadow);
+    .auth-left-tagline h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .auth-left-tagline p {
+      font-size: 14px;
+      color: rgba(255,255,255,.55);
     }
 
-    .auth-split-logo .logo-fallback {
-      width: 140px;
-      height: 140px;
-      background: linear-gradient(135deg, var(--accent), var(--warm-brown));
-      border-radius: 24px;
+    .auth-right-panel {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 42px;
-      font-weight: 900;
-      font-family: 'DM Sans', sans-serif;
-      margin-bottom: 12px;
+      padding: 32px 24px;
+      overflow-y: auto;
+      background: var(--cream);
     }
-
-    .auth-split-logo p {
+    .auth-form-card {
+      width: 100%;
+      max-width: 400px;
+    }
+    .auth-form-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .auth-form-header .auth-logo-mark {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--accent), var(--warm-brown));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 20px; font-weight: 900;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 24px rgba(193,127,58,.3);
+    }
+    .auth-form-header .auth-logo-mark ion-icon { font-size: 26px; }
+    .auth-form-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px; font-weight: 700;
+      color: var(--text-dark); margin-bottom: 6px;
+    }
+    .auth-form-header p {
+      font-size: 13px; color: var(--text-light);
+    }
+    .auth-error {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid var(--error-border);
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      margin-bottom: 13px;
+      display: none;
+    }
+    .auth-error.show { display: block; }
+    .auth-back-link {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .auth-back-link a {
       font-size: 13px;
       color: var(--text-light);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .auth-back-link a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .auth-page-wrap { flex-direction: column; }
+      .auth-left-panel { width: 100%; min-width: 0; flex-direction: row; padding: 16px 20px; gap: 16px; justify-content: flex-start; }
+      .auth-left-logo-container { width: 52px; height: 52px; border-radius: 12px; }
+      .auth-left-logo-container .logo-fallback { font-size: 18px; }
+      .auth-left-logo-container p { display: none; }
+      .auth-left-tagline { display: none; }
+    }
+
+    /* ========== BULK ATTENDANCE BUTTONS ========== */
+    .bulk-actions-chip {
+      display: flex;
+      gap: 6px;
+      padding: 0 4px;
+      border-left: 1px solid var(--border);
+    }
+    .bulk-btn {
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1.5px solid transparent;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .bulk-present { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+    .bulk-present:hover { background: var(--success); color: white; }
+    .bulk-late { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+    .bulk-late:hover { background: var(--warning); color: white; }
+    .bulk-absent { background: var(--error-bg); color: var(--error); border-color: var(--error-border); }
+    .bulk-absent:hover { background: var(--error); color: white; }
+
+    /* ========== GRADE TEMPLATES ========== */
+    .template-selector {
+      border-top: 1px solid var(--border-light);
+      padding-top: 16px;
       margin-top: 8px;
     }
-
-    .auth-split-form {
+    .template-list { display: flex; flex-direction: column; gap: 6px; }
+    .template-item {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .template-apply-btn {
       flex: 1;
-      min-width: 280px;
+      display: flex; flex-direction: column; align-items: flex-start;
+      background: var(--cream-2);
+      border: 1.5px solid var(--border-light);
+      border-radius: 9px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all .15s;
+      text-align: left;
+    }
+    .template-apply-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+    .template-name { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+    .template-cols { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+    .template-del-btn {
+      width: 28px; height: 28px;
+      background: none; border: none;
+      color: var(--text-light); cursor: pointer;
+      border-radius: 6px; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .template-del-btn:hover { background: var(--error-bg); color: var(--error); }
+
+    /* ========== LESSON NOTES PREVIEW ========== */
+    .lesson-notes-preview {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-top: 4px;
+      font-style: italic;
     }
 
-    /* ========== DRAG & DROP ZONE ========== */
+    /* ========== ATTENDANCE STREAK BADGE ========== */
+    .cc-streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+      border: 1px solid #f9ca24;
+      color: #e17055;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      margin-top: 8px;
+      letter-spacing: .3px;
+    }
+
+    /* ========== KEYBOARD SHORTCUT OVERLAY ========== */
+    .shortcut-hint {
+      position: fixed;
+      bottom: 72px;
+      right: 20px;
+      background: rgba(30, 24, 12, .95);
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 16px 20px;
+      z-index: 9998;
+      font-size: 13px;
+      color: rgba(255,255,255,.85);
+      min-width: 220px;
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 12px 40px rgba(0,0,0,.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .shortcut-hint.show { opacity: 1; pointer-events: all; }
+    .shortcut-hint kbd {
+      background: rgba(255,255,255,.15);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-right: 8px;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+
+    /* ========== OLD AUTH CLEANUP ========== */
     .file-upload-zone.drag-over .file-upload-label {
       border-color: var(--accent);
       background: var(--accent-light);
@@ -1442,20 +1649,21 @@
     .lesson-item {
       background: white;
       border: 1px solid var(--border-light);
+      border-left: 3px solid transparent;
       border-radius: var(--radius-sm);
       padding: 16px 20px;
       display: flex;
       align-items: center;
       gap: 16px;
       cursor: pointer;
-      transition: all .2s;
+      transition: border-color .2s, box-shadow .2s;
       position: relative
     }
 
     .lesson-item:hover {
       box-shadow: var(--shadow);
       border-color: var(--accent-light);
-      transform: translateX(3px)
+      border-left: 3px solid var(--accent);
     }
 
     .lesson-item.ielts-lesson {
@@ -2026,7 +2234,8 @@
       border: 1px solid var(--border-light);
       border-radius: var(--radius-sm);
       overflow: hidden;
-      border-collapse: collapse
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     .att-table th {
@@ -2085,7 +2294,7 @@
 
     /* MODALS */
     .ov {
-      display: none;
+      display: flex;
       position: fixed;
       inset: 0;
       background: rgba(44, 36, 22, .45);
@@ -2093,11 +2302,17 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      backdrop-filter: blur(6px)
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .2s ease, visibility .2s ease;
     }
 
     .ov.open {
-      display: flex
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
     }
 
     .modal {
@@ -2108,7 +2323,9 @@
       padding: 30px;
       box-shadow: var(--shadow-lg);
       animation: popIn .22s cubic-bezier(.34, 1.56, .64, 1);
-      border: 1px solid var(--border-light)
+      border: 1px solid var(--border-light);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .modal-lg {
@@ -2181,7 +2398,8 @@
     }
 
     .finput,
-    .fselect {
+    .fselect,
+    textarea.finput {
       width: 100%;
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
@@ -2191,7 +2409,8 @@
       background: var(--cream);
       color: var(--text-dark);
       outline: none;
-      transition: all .15s
+      transition: all .15s;
+      resize: vertical;
     }
 
     .finput:focus,
@@ -2207,28 +2426,30 @@
       gap: 12px
     }
 
-    html,
-    body {
-      height: 100% !important
-    }
-
+    /* === body modal lock === */
     body.modal-open {
       overflow: hidden !important
     }
 
     /* SHEET */
     .sheet-ov {
-      display: none;
+      display: flex;
       position: fixed;
       inset: 0;
       background: rgba(44, 36, 22, .35);
       z-index: 200;
       justify-content: flex-end;
-      backdrop-filter: blur(6px)
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .25s ease, visibility .25s ease;
     }
 
     .sheet-ov.open {
-      display: flex
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
     }
 
     .sheet {
@@ -2372,7 +2593,8 @@
       font-weight: 600;
       color: var(--text-dark);
       min-height: 18px;
-      word-break: break-all
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .info-card-val.empty {
@@ -2784,7 +3006,14 @@
     }
 
     .hue-slider {
-      background: linear-gradient(to right, hsl(0, 100%, 50%)0%, hsl(60, 100%, 50%)17%, hsl(120, 100%, 50%)33%, hsl(180, 100%, 50%)50%, hsl(240, 100%, 50%)67%, hsl(300, 100%, 50%)83%, hsl(360, 100%, 50%)100%)
+      background: linear-gradient(to right,
+        hsl(0, 100%, 50%) 0%,
+        hsl(60, 100%, 50%) 17%,
+        hsl(120, 100%, 50%) 33%,
+        hsl(180, 100%, 50%) 50%,
+        hsl(240, 100%, 50%) 67%,
+        hsl(300, 100%, 50%) 83%,
+        hsl(360, 100%, 50%) 100%)
     }
 
     .opacity-slider {
@@ -2943,30 +3172,77 @@
       }
     }
 
-    /* ── Attendance 3-button toggle ─────────────────────── */
+    /* ── Attendance 3-button toggle (colored balls with animation) ─ */
     .att-toggle {
       display: flex;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      width: fit-content;
+      align-items: center;
+      gap: 6px;
+      padding: 4px;
     }
     .att-opt {
-      background: white;
-      border: none;
-      padding: 4px 9px;
-      font-size: 13px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2.5px solid transparent;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-      color: var(--text-light);
-      border-right: 1px solid var(--border);
-      line-height: 1;
+      transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      position: relative;
+      overflow: hidden;
+      background: var(--cream-2);
+      color: transparent;
     }
-    .att-opt:last-child { border-right: none; }
-    .att-opt:hover { background: var(--cream-2); }
-    .att-opt.active-p { background: var(--success-bg); color: var(--success); font-weight: 700; }
-    .att-opt.active-l { background: var(--warning-bg); color: var(--warning); font-weight: 700; }
-    .att-opt.active-a { background: var(--error-bg); color: var(--error); font-weight: 700; }
+    .att-opt::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+    }
+    /* Present = green ball */
+    .att-opt:first-child::before { background: radial-gradient(circle at 35% 30%, #8dc47e, var(--success)); }
+    .att-opt:first-child::after { content: '✓'; position:absolute; font-size:15px; font-weight:800; color:white; opacity:0; transition: opacity .2s; }
+    /* Late = amber ball */
+    .att-opt:nth-child(2)::before { background: radial-gradient(circle at 35% 30%, #f5c96a, var(--warning)); }
+    .att-opt:nth-child(2)::after { content: '⏰'; position:absolute; font-size:13px; opacity:0; transition: opacity .2s; }
+    /* Absent = red ball */
+    .att-opt:last-child::before { background: radial-gradient(circle at 35% 30%, #e87b7b, var(--error)); }
+    .att-opt:last-child::after { content: '✕'; position:absolute; font-size:14px; font-weight:800; color:white; opacity:0; transition: opacity .2s; }
+
+    .att-opt:hover { transform: scale(1.15); border-color: var(--border); }
+    .att-opt:hover::before { transform: scale(0.5); }
+
+    .att-opt.active-p {
+      border-color: var(--success);
+      background: transparent;
+      transform: scale(1.1);
+      box-shadow: 0 4px 14px rgba(90,138,90,.4);
+    }
+    .att-opt.active-p::before { transform: scale(1); }
+    .att-opt.active-p::after { opacity: 1; }
+
+    .att-opt.active-l {
+      border-color: var(--warning);
+      background: transparent;
+      transform: scale(1.1);
+      box-shadow: 0 4px 14px rgba(184,112,32,.4);
+    }
+    .att-opt.active-l::before { transform: scale(1); }
+    .att-opt.active-l::after { opacity: 1; }
+
+    .att-opt.active-a {
+      border-color: var(--error);
+      background: transparent;
+      transform: scale(1.1);
+      box-shadow: 0 4px 14px rgba(192,64,64,.4);
+    }
+    .att-opt.active-a::before { transform: scale(1); }
+    .att-opt.active-a::after { opacity: 1; }
 
     /* ── Offline banner ─────────────────────────────────── */
     .offline-banner {
@@ -2991,6 +3267,8 @@
       padding: 12px 18px;
       font-size: 13px;
       max-width: 340px;
+      pointer-events: all !important;
+      position: fixed !important;
     }
     .toast-undo-btn {
       background: white;
@@ -3002,6 +3280,7 @@
       font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
+      pointer-events: all;
     }
     .toast-undo-btn:hover { background: var(--cream-2); }
 
@@ -3127,7 +3406,7 @@
       <div class="splash-ring"></div>
       <div class="splash-ring"></div>
       <div class="splash-icon-core">
-        <ion-icon name="medical-outline"></ion-icon>
+        <ion-icon name="school-outline"></ion-icon>
       </div>
     </div>
     <div class="splash-title">GradeJournal</div>
@@ -3142,7 +3421,7 @@
     <nav class="land-nav">
       <div class="land-logo">
         <div class="land-logo-mark">
-          <ion-icon name="medical-outline"></ion-icon>
+          <ion-icon name="school-outline"></ion-icon>
         </div>
         GradeJournal
       </div>
@@ -3202,39 +3481,56 @@
     <footer class="land-footer">© 2026 GradeJournal — Made for professional educators</footer>
   </div>
 
-<!-- AUTH - FIXED VERSION (SIGN IN ONLY) -->
+<!-- AUTH - REDESIGNED PROFESSIONAL -->
 <div id="s-auth" class="screen">
-  <div class="auth-container">
-    <div class="auth-logo-centered">
-      <div class="auth-logo-mark">
-        <ion-icon name="medical-outline"></ion-icon>
+  <div class="auth-page-wrap">
+    <!-- Left panel: Logo / branding -->
+    <div class="auth-left-panel">
+      <div class="auth-brand">
+        <div class="auth-brand-icon">
+          <ion-icon name="school-outline"></ion-icon>
+        </div>
+        <div class="auth-brand-name">GradeJournal</div>
       </div>
-      <h2>GradeJournal</h2>
-      <p id="auth-tagline">Welcome back — log in to continue</p>
+      <div class="auth-left-logo-container" id="auth-logo-container">
+        <div class="logo-fallback">GJ</div>
+        <p>Your school logo appears here</p>
+      </div>
+      <div class="auth-left-tagline">
+        <h2>Teaching is hard enough.</h2>
+        <p>Your gradebook shouldn't be.</p>
+      </div>
     </div>
+    <!-- Right panel: Form -->
+    <div class="auth-right-panel">
+      <div class="auth-form-card">
+        <div class="auth-form-header">
+          <div class="auth-logo-mark">
+            <ion-icon name="school-outline"></ion-icon>
+          </div>
+          <h2>Welcome back</h2>
+          <p id="auth-tagline">Log in to your GradeJournal account</p>
+        </div>
 
-    <div class="auth-split">
-      <div class="auth-split-form" style="width:100%;">
-        <div class="auth-tabs-wrap">
-          <div class="auth-tabs">
-            <button class="auth-tab active" id="tab-signin" onclick="authSwitchTab('signin')">Log In</button>
-          </div>
+        <div id="err-signin" class="auth-error"></div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" class="form-input" id="si-email" placeholder="teacher@school.com" autocomplete="email">
         </div>
-        <div class="auth-track-wrap">
-          <div class="auth-track" id="auth-track">
-            <!-- Sign In Panel - Only Panel -->
-            <div class="auth-panel" style="width:100%;">
-              <div id="err-signin" class="auth-error"></div>
-              <div class="form-group"><label>Email Address</label><input type="email" class="form-input" id="si-email"
-                  placeholder="teacher@school.com"></div>
-              <div class="form-group"><label>Password</label><input type="password" class="form-input"
-                  id="si-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit('signin')">
-              </div>
-              <button class="auth-submit" onclick="authSubmit('signin')">Log In to GradeJournal</button>
-            </div>
-          </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-input" id="si-password" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')authSubmit('signin')" autocomplete="current-password">
         </div>
-        <div class="auth-back"><a onclick="showLanding()">← Back to home</a></div>
+
+        <button class="auth-submit" id="tab-signin" onclick="authSubmit('signin')">
+          Log In to GradeJournal →
+        </button>
+
+        <div class="auth-back-link">
+          <a onclick="showLanding()">← Back to homepage</a>
+        </div>
       </div>
     </div>
   </div>
@@ -3244,7 +3540,7 @@
     <div class="topbar">
       <div class="topbar-logo">
         <div class="logo-mark">
-          <ion-icon name="medical-outline"></ion-icon>
+          <ion-icon name="school-outline"></ion-icon>
         </div>
         GradeJournal
       </div>
@@ -3352,6 +3648,7 @@
             stroke="currentColor" stroke-width="3">
             <polyline points="20 6 9 17 4 12" />
           </svg>Saved</div>
+        <button class="btn btn-secondary btn-sm" onclick="openLessonNotes()" id="add-notes-btn">📝 Notes</button>
         <button class="btn btn-secondary btn-sm" onclick="openAddColumn()" id="add-col-btn"> Column</button>
         <button class="btn btn-primary btn-sm" onclick="exportLesson()"><svg width="12" height="12" fill="none"
             stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -3475,6 +3772,30 @@
           placeholder="e.g. Quiz 1, Midterm, Oral..." onkeydown="ifEnter(event,saveColumn)"></div>
       <div class="modal-foot"><button class="btn btn-ghost-app" onclick="closeOv('ov-column')">Cancel</button><button
           class="btn btn-primary" onclick="saveColumn()">Add Column</button></div>
+      <!-- Template Selector -->
+      <div class="template-selector" id="template-selector">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:8px">Or Apply a Template</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LESSON NOTES MODAL -->
+  <div class="ov" id="ov-lesson-notes">
+    <div class="modal">
+      <div class="modal-hdr">
+        <div class="modal-icon">📝</div>
+        <div>
+          <div class="modal-title">Lesson Notes</div>
+          <div class="modal-sub">Private notes visible in lesson list</div>
+        </div>
+      </div>
+      <div class="fg">
+        <textarea class="finput" id="lesson-notes-area" rows="5" placeholder="e.g. Students struggled with Chapter 4. Schedule review next lesson..."></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost-app" onclick="closeOv('ov-lesson-notes')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveLessonNotes()">Save Notes</button>
+      </div>
     </div>
   </div>
 
@@ -3761,7 +4082,7 @@
         <ion-icon name="arrow-back-outline"></ion-icon> Back
       </button>
       <div class="topbar-logo">
-        <div class="logo-mark"><ion-icon name="medical-outline"></ion-icon></div>
+        <div class="logo-mark"><ion-icon name="school-outline"></ion-icon></div>
         GradeJournal
       </div>
     </div>
@@ -3792,7 +4113,7 @@
               Open in Gmail
             </a>
             <p style="margin-top: 16px; font-size: 13px; color: var(--text-light);">
-              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6702140f0a121508030811490a0808095652575f27000a060e0b4904080a">eshmurodov.moon1508@gmail.com</a>
+              <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6702140f0a121508030811490a0808095652575f27000a060e0b4904080a"><span class="__cf_email__" data-cfemail="0663756e6b737469626970286b6969683733363e46616b676f6a2865696b">[email&#160;protected]</span></a>
             </p>
           </div>
           
