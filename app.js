@@ -30,20 +30,40 @@ let syncTimer = null;
 let abortController = null;
 
 function connectSupabaseClient() {
-  if (window.supabaseClient?.supabase) { supabase = window.supabaseClient.supabase; return true; }
+  if (window.supabaseClient?.supabase) { 
+    supabase = window.supabaseClient.supabase; 
+    console.log('✅ Supabase connected');
+    return true; 
+  }
   return false;
 }
+
+// Try immediate connection
 connectSupabaseClient();
-window.addEventListener('supabase:ready', connectSupabaseClient);
+
+// Listen for ready event
+window.addEventListener('supabase:ready', () => {
+  connectSupabaseClient();
+  console.log('🚀 Supabase ready event received');
+});
 
 // ============================================
 // DATABASE & STATE
-// ============================================
+//===========================================
 let DB = {
-  classrooms: [], nextId: 1, user: null,
-  lastSync: null, syncStatus: 'idle', pendingChanges: [],
-  exportSettings: { color: { h: 30, s: 60, l: 50, a: 100 }, logo: null, logoName: null, logoSize: null },
-  gradeTemplates: []  // NEW: grade column templates
+  classrooms: [], 
+  nextId: 1, 
+  user: null,
+  lastSync: null, 
+  syncStatus: 'idle', 
+  pendingChanges: [],
+  exportSettings: { 
+    color: { h: 30, s: 60, l: 50, a: 100 }, 
+    logo: null, 
+    logoName: null, 
+    logoSize: null 
+  },
+  gradeTemplates: []
 };
 
 let DB_INDEX = {
@@ -92,7 +112,7 @@ function mergeData(local, remote) {
     classrooms: [],
     nextId: Math.max(local.nextId || 1, remote.nextId || 1),
     lastSync: new Date().toISOString(),
-    exportSettings: remote.exportSettings || local.exportSettings  // FIX: merge exportSettings
+    exportSettings: remote.exportSettings || local.exportSettings
   };
   const localMap = new Map(local.classrooms?.map(c => [c.id, c]) || []);
   const remoteMap = new Map(remote.classrooms?.map(c => [c.id, c]) || []);
@@ -105,7 +125,11 @@ function mergeData(local, remote) {
       const lt = new Date(lc.updatedAt || 0).getTime();
       const rt = new Date(rc.updatedAt || 0).getTime();
       if (rt > lt) {
-        merged.classrooms.push({ ...rc, students: mergeArrayById(lc.students||[], rc.students||[]), lessons: mergeArrayById(lc.lessons||[], rc.lessons||[]) });
+        merged.classrooms.push({ 
+          ...rc, 
+          students: mergeArrayById(lc.students||[], rc.students||[]), 
+          lessons: mergeArrayById(lc.lessons||[], rc.lessons||[]) 
+        });
       } else { merged.classrooms.push(lc); }
     }
   }
@@ -140,7 +164,7 @@ async function loadDB() {
       c.students?.forEach(s => { if (!s.updatedAt) s.updatedAt = c.updatedAt; });
       c.lessons?.forEach(l => { if (!l.updatedAt) l.updatedAt = c.updatedAt; });
     });
-    migrateLegacyData();  // FIX: migrate BEFORE rebuilding index
+    migrateLegacyData();
     rebuildIndex();
   } catch (e) {
     console.error('Failed to load DB', e);
@@ -182,7 +206,8 @@ function migrateLegacyData() {
 async function syncWithCloud() {
   if (!supabase || !DB.user?.id || DB.user?.mode !== 'supabase') return;
   if (DB.syncStatus === 'syncing') return;
-  DB.syncStatus = 'syncing'; updateSyncUI();
+  DB.syncStatus = 'syncing'; 
+  updateSyncUI();
   try {
     const cloudData = await loadUserDataFromSupabase(DB.user.id);
     DB = mergeData(DB, cloudData);
@@ -196,26 +221,10 @@ async function syncWithCloud() {
     showToast('✅ Synced with cloud');
   } catch (error) {
     console.error('Sync failed:', error);
-    DB.syncStatus = 'error'; updateSyncUI();
-    showErrorNotification('⚠️ Sync failed. Using local mode.');
+    DB.syncStatus = 'error'; 
+    updateSyncUI();
     queuePendingChanges();
   }
-}
-
-function showErrorNotification(message) {
-  document.querySelector('.error-notification')?.remove();
-  const n = document.createElement('div');
-  n.className = 'error-notification';
-  n.innerHTML = `<div style="font-size:20px">⚠️</div><div style="flex:1;font-size:14px;line-height:1.4">${message}</div><button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">×</button>`;
-  n.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--error);color:white;padding:16px 20px;border-radius:12px;box-shadow:var(--shadow-lg);z-index:10000;display:flex;align-items:center;gap:12px;max-width:350px;animation:slideIn .3s ease;font-weight:500';
-  document.body.appendChild(n);
-  setTimeout(() => n.parentElement && n.remove(), 5000);
-}
-
-function showAuthError(message) {
-  const el = safeGetElement('err-signin');
-  if (el) { el.textContent = message; el.classList.add('show'); }
-  showErrorNotification(message);
 }
 
 function queuePendingChanges(badge) {
@@ -252,10 +261,17 @@ function timeAgo(ts) {
 
 function startAutoSync() {
   if (syncTimer) clearInterval(syncTimer);
-  syncTimer = setInterval(() => { if (navigator.onLine && DB.user?.mode === 'supabase') syncWithCloud(); }, SYNC_INTERVAL);
+  syncTimer = setInterval(() => { 
+    if (navigator.onLine && DB.user?.mode === 'supabase') syncWithCloud(); 
+  }, SYNC_INTERVAL);
 }
 
-function stopAutoSync() { if (syncTimer) { clearInterval(syncTimer); syncTimer = null; } }
+function stopAutoSync() { 
+  if (syncTimer) { 
+    clearInterval(syncTimer); 
+    syncTimer = null; 
+  } 
+}
 
 // ============================================
 // SUPABASE DATA LOADING
@@ -271,29 +287,46 @@ async function loadUserDataFromSupabase(userId) {
   try {
     const tablesExist = await checkTableExists('classrooms');
     if (!tablesExist) return { classrooms: [] };
+    
     const [classrooms, settings] = await Promise.all([
       supabase.from('classrooms').select('*').eq('user_id', userId),
       supabase.from('export_settings').select('*').eq('user_id', userId).maybeSingle()
     ]);
+    
     if (classrooms.error) {
       if (classrooms.error.message?.includes('does not exist')) return { classrooms: [] };
       throw classrooms.error;
     }
     if (!classrooms.data?.length) return { classrooms: [] };
+    
     const classroomIds = classrooms.data.map(c => c.id);
     const [students, lessons, columns] = await Promise.all([
       supabase.from('students').select('*').in('classroom_id', classroomIds),
       supabase.from('lessons').select('*').in('classroom_id', classroomIds),
       supabase.from('columns').select('*').in('classroom_id', classroomIds)
     ]);
+    
     const studentsByClassroom = new Map();
-    students.data?.forEach(s => { if (!studentsByClassroom.has(s.classroom_id)) studentsByClassroom.set(s.classroom_id, []); studentsByClassroom.get(s.classroom_id).push(s); });
+    students.data?.forEach(s => { 
+      if (!studentsByClassroom.has(s.classroom_id)) studentsByClassroom.set(s.classroom_id, []); 
+      studentsByClassroom.get(s.classroom_id).push(s); 
+    });
+    
     const lessonsByClassroom = new Map();
-    lessons.data?.forEach(l => { if (!lessonsByClassroom.has(l.classroom_id)) lessonsByClassroom.set(l.classroom_id, []); lessonsByClassroom.get(l.classroom_id).push(l); });
+    lessons.data?.forEach(l => { 
+      if (!lessonsByClassroom.has(l.classroom_id)) lessonsByClassroom.set(l.classroom_id, []); 
+      lessonsByClassroom.get(l.classroom_id).push(l); 
+    });
+    
     const columnsByClassroom = new Map();
-    columns.data?.forEach(col => { if (!columnsByClassroom.has(col.classroom_id)) columnsByClassroom.set(col.classroom_id, []); columnsByClassroom.get(col.classroom_id).push(col); });
+    columns.data?.forEach(col => { 
+      if (!columnsByClassroom.has(col.classroom_id)) columnsByClassroom.set(col.classroom_id, []); 
+      columnsByClassroom.get(col.classroom_id).push(col); 
+    });
+    
     const lessonIds = lessons.data?.map(l => l.id) || [];
     let grades = [], attendance = [];
+    
     for (let i = 0; i < lessonIds.length; i += BATCH_SIZE) {
       const batch = lessonIds.slice(i, i + BATCH_SIZE);
       const [gb, ab] = await Promise.all([
@@ -303,32 +336,85 @@ async function loadUserDataFromSupabase(userId) {
       grades = grades.concat(gb.data || []);
       attendance = attendance.concat(ab.data || []);
     }
+    
     const gradesByLesson = new Map();
-    grades.forEach(g => { if (!gradesByLesson.has(g.lesson_id)) gradesByLesson.set(g.lesson_id, []); gradesByLesson.get(g.lesson_id).push(g); });
+    grades.forEach(g => { 
+      if (!gradesByLesson.has(g.lesson_id)) gradesByLesson.set(g.lesson_id, []); 
+      gradesByLesson.get(g.lesson_id).push(g); 
+    });
+    
     const attendanceByLesson = new Map();
-    attendance.forEach(a => { if (!attendanceByLesson.has(a.lesson_id)) attendanceByLesson.set(a.lesson_id, []); attendanceByLesson.get(a.lesson_id).push(a); });
+    attendance.forEach(a => { 
+      if (!attendanceByLesson.has(a.lesson_id)) attendanceByLesson.set(a.lesson_id, []); 
+      attendanceByLesson.get(a.lesson_id).push(a); 
+    });
+    
     const cloudClassrooms = classrooms.data.map(c => {
       const classroomLessons = lessonsByClassroom.get(c.id) || [];
       const lessonsWithData = classroomLessons.map(l => {
         const data = {};
-        (gradesByLesson.get(l.id) || []).forEach(g => { if (g.column_id) data[`col_${g.column_id}_${g.student_id}`] = g.grade; });
-        (attendanceByLesson.get(l.id) || []).forEach(a => { data[`att_${a.student_id}`] = a.status; });
-        return { id: l.lesson_number, topic: l.title, date: l.lesson_date, num: l.lesson_number, mode: l.mode, studentIds: l.student_ids || [], data, updatedAt: l.updated_at };
+        (gradesByLesson.get(l.id) || []).forEach(g => { 
+          if (g.column_id) data[`col_${g.column_id}_${g.student_id}`] = g.grade; 
+        });
+        (attendanceByLesson.get(l.id) || []).forEach(a => { 
+          data[`att_${a.student_id}`] = a.status; 
+        });
+        return { 
+          id: l.lesson_number, 
+          topic: l.title, 
+          date: l.lesson_date, 
+          num: l.lesson_number, 
+          mode: l.mode, 
+          studentIds: l.student_ids || [], 
+          data, 
+          updatedAt: l.updated_at 
+        };
       });
+      
       return {
-        id: c.id, name: c.name, subject: c.subject || '', teacher: c.teacher_name || '',
-        students: (studentsByClassroom.get(c.id) || []).map(s => ({ id: s.student_number, name: s.name, phone: s.phone||'', email: s.email||'', parentName: s.parent_name||'', parentPhone: s.parent_phone||'', note: s.notes||'', updatedAt: s.updated_at })),
+        id: c.id, 
+        name: c.name, 
+        subject: c.subject || '', 
+        teacher: c.teacher_name || '',
+        students: (studentsByClassroom.get(c.id) || []).map(s => ({ 
+          id: s.student_number, 
+          name: s.name, 
+          phone: s.phone || '', 
+          email: s.email || '', 
+          parentName: s.parent_name || '', 
+          parentPhone: s.parent_phone || '', 
+          note: s.notes || '', 
+          updatedAt: s.updated_at 
+        })),
         lessons: lessonsWithData,
-        columns: (columnsByClassroom.get(c.id) || []).map(col => ({ id: col.column_number, name: col.name, ielts: col.ielts||false, lessonId: col.lesson_id ? classroomLessons.find(l => l.id === col.lesson_id)?.lesson_number : null })),
-        nextSid: c.next_student_id, nextLid: c.next_lesson_id, nextCid: c.next_column_id, updatedAt: c.updated_at
+        columns: (columnsByClassroom.get(c.id) || []).map(col => ({ 
+          id: col.column_number, 
+          name: col.name, 
+          ielts: col.ielts || false, 
+          lessonId: col.lesson_id ? classroomLessons.find(l => l.id === col.lesson_id)?.lesson_number : null 
+        })),
+        nextSid: c.next_student_id, 
+        nextLid: c.next_lesson_id, 
+        nextCid: c.next_column_id, 
+        updatedAt: c.updated_at
       };
     });
+    
     let exportSettings = DB.exportSettings;
-    if (settings.data) exportSettings = { color: settings.data.color || { h:30,s:60,l:50,a:100 }, logo: settings.data.logo_data||null, logoName: settings.data.logo_name||null, logoSize: settings.data.logo_size||null };
-    return { classrooms: cloudClassrooms, exportSettings, nextId: Math.max(...cloudClassrooms.map(c => parseInt(c.id.split('-')[0])||0), 0) + 1 };
+    if (settings.data) exportSettings = { 
+      color: settings.data.color || { h:30,s:60,l:50,a:100 }, 
+      logo: settings.data.logo_data || null, 
+      logoName: settings.data.logo_name || null, 
+      logoSize: settings.data.logo_size || null 
+    };
+    
+    return { 
+      classrooms: cloudClassrooms, 
+      exportSettings, 
+      nextId: Math.max(...cloudClassrooms.map(c => parseInt(c.id.split('-')[0]) || 0), 0) + 1 
+    };
   } catch (e) {
     console.error('Supabase load error:', e);
-    showErrorNotification('Database tables not set up. Please run the Supabase setup script.');
     return { classrooms: [] };
   }
 }
@@ -336,16 +422,26 @@ async function loadUserDataFromSupabase(userId) {
 async function saveUserDataToSupabase(userId) {
   if (!supabase) throw new Error('Supabase not initialized');
   const errors = [];
+  
   for (const c of DB.classrooms) {
     try {
-      const { error } = await supabase.from('classrooms').upsert({ user_id: userId, id: c.id, name: c.name, subject: c.subject, teacher_name: c.teacher, next_student_id: c.nextSid, next_lesson_id: c.nextLid, next_column_id: c.nextCid, updated_at: new Date().toISOString() }).select().single();
-      if (error) {
-        if (error.message?.includes('does not exist')) { showErrorNotification('Database tables not set up.'); return; }
-        throw error;
-      }
+      const { error } = await supabase.from('classrooms').upsert({ 
+        user_id: userId, 
+        id: c.id, 
+        name: c.name, 
+        subject: c.subject, 
+        teacher_name: c.teacher, 
+        next_student_id: c.nextSid, 
+        next_lesson_id: c.nextLid, 
+        next_column_id: c.nextCid, 
+        updated_at: new Date().toISOString() 
+      }).select().single();
+      
+      if (error) throw error;
     } catch (e) { errors.push(e); }
   }
-  if (errors.length) showErrorNotification(`⚠️ ${errors.length} items failed to sync`);
+  
+  if (errors.length) console.warn(`${errors.length} items failed to sync`);
 }
 
 // ============================================
@@ -360,8 +456,13 @@ async function saveDB(badge, immediate = false) {
     try {
       saveToLocalStorage();
       if (navigator.onLine && supabase && DB.user?.mode === 'supabase' && DB.user?.id) {
-        try { await saveUserDataToSupabase(DB.user.id); DB.pendingChanges = []; }
-        catch (e) { console.error('Cloud save failed:', e); queuePendingChanges(badge); }
+        try { 
+          await saveUserDataToSupabase(DB.user.id); 
+          DB.pendingChanges = []; 
+        } catch (e) { 
+          console.error('Cloud save failed:', e); 
+          queuePendingChanges(badge); 
+        }
       }
       const lastBadge = saveQueue[saveQueue.length - 1]?.badge;
       if (lastBadge) showSave(lastBadge);
@@ -405,89 +506,188 @@ function showScreen(id) {
   const el = safeGetElement(id);
   if (el) el.classList.add('active');
 }
+
 function showLanding() { showScreen('s-landing'); }
-function showAuth(mode) { showScreen('s-auth'); if (mode) authSwitchTab(mode); loadAuthLogo(); }
-function goHome() { showScreen('s-home'); renderClassrooms(); }
-function goBackToClass() { showScreen('s-classroom'); switchTab('students', document.querySelector('[data-tab="students"]')); }
+
+function showAuth() { 
+  showScreen('s-auth'); 
+  loadAuthFeatures(); 
+}
+
+function goHome() { 
+  showScreen('s-home'); 
+  renderClassrooms(); 
+}
+
+function goBackToClass() { 
+  showScreen('s-classroom'); 
+  switchTab('students', document.querySelector('[data-tab="students"]')); 
+}
+
 function showContact() { showScreen('s-contact'); }
 
+function openSettings() {
+  closeOv('ov-user');
+  const nameInput = safeGetElement('settings-name');
+  const schoolInput = safeGetElement('settings-school');
+  const roleSelect = safeGetElement('settings-role');
+  
+  if (nameInput && DB.user) nameInput.value = DB.user.name || '';
+  if (schoolInput && DB.user) schoolInput.value = DB.user.school || '';
+  if (roleSelect && DB.user) roleSelect.value = DB.user.role || 'teacher';
+  
+  showScreen('s-settings');
+}
+
+function saveSettings() {
+  const nameInput = safeGetElement('settings-name');
+  const schoolInput = safeGetElement('settings-school');
+  const roleSelect = safeGetElement('settings-role');
+  
+  if (nameInput) DB.user.name = nameInput.value.trim() || DB.user.name;
+  if (schoolInput) DB.user.school = schoolInput.value.trim() || '';
+  if (roleSelect) DB.user.role = roleSelect.value;
+  
+  DB.user.onboardingCompleted = true;
+  saveDB('home', true);
+  toast('Settings saved!');
+  
+  safeSetText('user-name-display', DB.user.name);
+  safeSetText('user-av', DB.user.name.slice(0, 2).toUpperCase());
+  safeSetText('um-name', DB.user.name);
+  
+  goHome();
+}
+
 // ============================================
-// AUTH LOGO
+// AUTH FEATURES
 // ============================================
-function loadAuthLogo() {
-  const logoContainer = safeGetElement('auth-logo-container');
-  if (!logoContainer) return;
-  if (DB.exportSettings?.logo) {
-    logoContainer.innerHTML = `<img src="${DB.exportSettings.logo}" alt="School Logo" class="auth-logo-img" loading="lazy">`;
-  } else {
-    logoContainer.innerHTML = `<div class="logo-fallback">GJ</div><p>Your School Logo</p>`;
+function loadAuthFeatures() {
+  const container = safeGetElement('auth-features-container');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="auth-feature-item">
+      <ion-icon name="checkmark-circle"></ion-icon>
+      <span>Track attendance & grades</span>
+    </div>
+    <div class="auth-feature-item">
+      <ion-icon name="bar-chart"></ion-icon>
+      <span>Detailed analytics</span>
+    </div>
+    <div class="auth-feature-item">
+      <ion-icon name="document-text"></ion-icon>
+      <span>Export to PDF/Excel</span>
+    </div>
+    <div class="auth-feature-item">
+      <ion-icon name="cloud-done"></ion-icon>
+      <span>Cloud sync & offline</span>
+    </div>
+  `;
+}
+
+// ============================================
+// AUTHENTICATION - LOGIN ONLY
+// ============================================
+function showAuthError(message) {
+  const el = safeGetElement('err-signin');
+  if (el) { 
+    el.textContent = message; 
+    el.classList.add('show');
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      el.classList.remove('show');
+    }, 5000);
   }
 }
 
-// ============================================
-// AUTHENTICATION
-// ============================================
-let _authMode = 'signin';
-
-function authSwitchTab(mode) {
-  _authMode = mode;
-  const tabSignin = safeGetElement('tab-signin');
-  const authTagline = safeGetElement('auth-tagline');
-  const errSignin = safeGetElement('err-signin');
-  // FIX: properly reflect mode
-  if (tabSignin) tabSignin.classList.toggle('active', mode === 'signin');
-  if (authTagline) authTagline.textContent = mode === 'signin' ? 'Welcome back — log in to continue' : 'Create your account';
-  if (errSignin) errSignin.classList.remove('show');
-}
-
-function authErr(id, msg) { showAuthError(msg); }
-
-async function authSubmit(mode) {
-  if (mode === 'signin') {
-    const email = safeGetElement('si-email')?.value.trim();
-    const pass = safeGetElement('si-password')?.value;
-    if (!email || !pass) { showAuthError('Please fill in all fields.'); return; }
-    if (pass.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
-    if (supabase) {
-      try {
-        const guestData = { ...DB };
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) showAuthError('Invalid email or password.');
-          else if (error.message.includes('Email not confirmed')) showAuthError('Please confirm your email first.');
-          else if (error.message.includes('Network') || error.message.includes('fetch')) {
-            showAuthError('Unable to connect. Using local mode.');
-            DB.user = { id: 'local_' + Date.now(), email, name: email.split('@')[0], mode: 'local' };
-            await saveDB('home', true); enterApp();
-          } else showAuthError(error.message);
-          return;
-        }
-        const user = data.user;
-        let cloudData = { classrooms: [] };
-        try { cloudData = await loadUserDataFromSupabase(user.id); } catch {}
-        DB = mergeData(guestData, cloudData);
-        DB.user = { id: user.id, email: user.email, name: user.user_metadata?.full_name || user.email.split('@')[0], mode: 'supabase' };
-        await saveDB('home', true);
-        startAutoSync();
-        enterApp();
-      } catch (err) { console.error('Auth error:', err); showAuthError('Authentication failed. Please try again.'); }
+async function authSubmit() {
+  const email = safeGetElement('si-email')?.value.trim();
+  const pass = safeGetElement('si-password')?.value;
+  
+  if (!email || !pass) { 
+    showAuthError('Please fill in all fields.'); 
+    return; 
+  }
+  
+  const submitBtn = safeGetElement('signin-btn');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = '⏳ Signing in...';
+  submitBtn.disabled = true;
+  
+  try {
+    if (!supabase) {
+      showAuthError('Supabase not initialized. Please check connection.');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
       return;
     }
-    DB.user = { id: 'local_' + Date.now(), email, name: email.split('@')[0], mode: 'local' };
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password: pass 
+    });
+    
+    if (error) {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      
+      if (error.message.includes('Invalid login credentials')) {
+        showAuthError('Invalid email or password.');
+      } else if (error.message.includes('Email not confirmed')) {
+        showAuthError('Please confirm your email first.');
+      } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+        showAuthError('Network error. Please check your connection.');
+      } else {
+        showAuthError(error.message);
+      }
+      return;
+    }
+    
+    const user = data.user;
+    
+    // Load cloud data
+    let cloudData = { classrooms: [] };
+    try { 
+      cloudData = await loadUserDataFromSupabase(user.id); 
+    } catch (e) {
+      console.warn('Could not load cloud data');
+    }
+    
+    DB = mergeData(DB, cloudData);
+    DB.user = { 
+      id: user.id, 
+      email: user.email, 
+      name: user.user_metadata?.full_name || user.email.split('@')[0], 
+      mode: 'supabase',
+      onboardingCompleted: false 
+    };
+    
     await saveDB('home', true);
+    startAutoSync();
     enterApp();
+    
+  } catch (err) {
+    console.error('Auth error:', err);
+    showAuthError('Authentication failed. Please try again.');
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
   }
 }
 
 function enterApp() {
   const u = DB.user;
   if (!u) return;
+  
   safeSetText('user-name-display', u.name);
   safeSetText('user-av', u.name.slice(0, 2).toUpperCase());
   safeSetText('um-name', u.name);
-  safeSetText('um-email', u.email || 'Local mode');
+  safeSetText('um-email', u.email || '');
+  
   const h = new Date().getHours();
   safeSetText('home-greeting', (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + u.name.split(' ')[0] + ' 👋');
+  
   showScreen('s-home');
   renderClassrooms();
   addSyncIndicator();
@@ -508,9 +708,14 @@ function addSyncIndicator() {
 async function signOut() {
   stopAutoSync();
   await saveDB('home', true);
-  if (supabase && DB.user?.mode === 'supabase') await supabase.auth.signOut();
+  
+  if (supabase && DB.user?.mode === 'supabase') {
+    await supabase.auth.signOut();
+  }
+  
   localStorage.setItem('gj_v6_pro_last_user', JSON.stringify({ ...DB }));
-  DB.user = null; DB.syncStatus = 'idle';
+  DB.user = null; 
+  DB.syncStatus = 'idle';
   saveToLocalStorage();
   closeOv('ov-user');
   showLanding();
@@ -521,9 +726,18 @@ async function signOut() {
 // ============================================
 function checkOnboarding() {
   if (DB.user && !DB.user.onboardingCompleted) {
-    if (DB.user.name) { const el = safeGetElement('onboarding-name'); if (el) el.value = DB.user.name; }
-    if (DB.user.school) { const el = safeGetElement('onboarding-school'); if (el) el.value = DB.user.school; }
-    if (DB.user.role) { const el = safeGetElement('onboarding-role'); if (el) el.value = DB.user.role; }
+    if (DB.user.name) { 
+      const el = safeGetElement('onboarding-name'); 
+      if (el) el.value = DB.user.name; 
+    }
+    if (DB.user.school) { 
+      const el = safeGetElement('onboarding-school'); 
+      if (el) el.value = DB.user.school; 
+    }
+    if (DB.user.role) { 
+      const el = safeGetElement('onboarding-role'); 
+      if (el) el.value = DB.user.role; 
+    }
     setTimeout(() => openOv('ov-onboarding'), 500);
   }
 }
@@ -532,20 +746,40 @@ async function saveOnboarding() {
   const nameInput = safeGetElement('onboarding-name');
   const schoolInput = safeGetElement('onboarding-school');
   const roleSelect = safeGetElement('onboarding-role');
+  
   if (!nameInput || !schoolInput || !roleSelect) return;
+  
   const name = nameInput.value.trim();
   const school = schoolInput.value.trim();
   const role = roleSelect.value;
-  if (!name) { shake('onboarding-name'); return; }
-  DB.user.name = name; DB.user.school = school; DB.user.role = role; DB.user.onboardingCompleted = true;
+  
+  if (!name) { 
+    shake('onboarding-name'); 
+    return; 
+  }
+  
+  DB.user.name = name; 
+  DB.user.school = school; 
+  DB.user.role = role; 
+  DB.user.onboardingCompleted = true;
+  
   safeSetText('user-name-display', name);
   safeSetText('user-av', name.slice(0, 2).toUpperCase());
   safeSetText('um-name', name);
+  
   const h = new Date().getHours();
   safeSetText('home-greeting', (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + name.split(' ')[0] + ' 👋');
+  
   if (supabase && DB.user?.mode === 'supabase' && DB.user?.id) {
-    await supabase.from('profiles').upsert({ id: DB.user.id, full_name: name, school_name: school, role, onboarding_completed: true });
+    await supabase.from('profiles').upsert({ 
+      id: DB.user.id, 
+      full_name: name, 
+      school_name: school, 
+      role, 
+      onboarding_completed: true 
+    });
   }
+  
   saveDB('home', true);
   closeOv('ov-onboarding');
 }
@@ -570,12 +804,26 @@ function renderClassrooms() {
     const studentCount = Array.isArray(c.students) ? c.students.length : 0;
     const lessonCount = Array.isArray(c.lessons) ? c.lessons.length : 0;
     const columnCount = Array.isArray(c.columns) ? c.columns.length : 0;
-    // Attendance streak detection
     const hasStreak = c.students.some(s => checkAttendanceStreak(c, s.id));
-    card.innerHTML = `<div class="cc-header"><div class="cc-icon">${icon}</div><button class="cc-del" onclick="event.stopPropagation();deleteClassConfirm('${c.id}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div>
-      <div class="cc-name">${esc(c.name)}</div><div class="cc-subject">${esc(c.subject || '')}${c.teacher ? ' · ' + esc(c.teacher) : ''}</div>
-      <div class="cc-stats"><div><div class="cc-stat-val">${studentCount}</div><div class="cc-stat-lbl">Students</div></div><div><div class="cc-stat-val">${lessonCount}</div><div class="cc-stat-lbl">Lessons</div></div><div><div class="cc-stat-val">${columnCount}</div><div class="cc-stat-lbl">Columns</div></div></div>
+    
+    card.innerHTML = `<div class="cc-header">
+        <div class="cc-icon">${icon}</div>
+        <button class="cc-del" onclick="event.stopPropagation();deleteClassConfirm('${c.id}')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="cc-name">${esc(c.name)}</div>
+      <div class="cc-subject">${esc(c.subject || '')}${c.teacher ? ' · ' + esc(c.teacher) : ''}</div>
+      <div class="cc-stats">
+        <div><div class="cc-stat-val">${studentCount}</div><div class="cc-stat-lbl">Students</div></div>
+        <div><div class="cc-stat-val">${lessonCount}</div><div class="cc-stat-lbl">Lessons</div></div>
+        <div><div class="cc-stat-val">${columnCount}</div><div class="cc-stat-lbl">Columns</div></div>
+      </div>
       ${hasStreak ? '<div class="cc-streak-badge">🔥 Perfect Attendance</div>' : ''}`;
+    
     card.onclick = () => openClassroom(c.id);
     grid.appendChild(card);
   });
@@ -588,9 +836,10 @@ function renderClassrooms() {
   maybeShowWelcomeCard();
 }
 
-// FIX: streak detection helper
 function checkAttendanceStreak(classroom, studentId) {
-  const sorted = [...classroom.lessons].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+  const sorted = [...classroom.lessons]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5);
   if (sorted.length < 3) return false;
   return sorted.every(l => {
     if (l.studentIds && !l.studentIds.includes(studentId)) return true;
@@ -603,17 +852,27 @@ function createClassroom() {
   if (!nameInput) return;
   const name = nameInput.value.trim();
   if (!name) { shake('inp-cname'); return; }
+  
   const subjectInput = safeGetElement('inp-csub');
   const teacherInput = safeGetElement('inp-cteacher');
+  
   const newClass = {
     id: `class_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    name, subject: subjectInput?.value.trim() || '', teacher: teacherInput?.value.trim() || '',
-    students: [], columns: [], lessons: [],
-    nextSid: 1, nextLid: 1, nextCid: 1,
+    name, 
+    subject: subjectInput?.value.trim() || '', 
+    teacher: teacherInput?.value.trim() || '',
+    students: [], 
+    columns: [], 
+    lessons: [],
+    nextSid: 1, 
+    nextLid: 1, 
+    nextCid: 1,
     updatedAt: new Date().toISOString()
   };
+  
   DB.classrooms.push(newClass);
-  rebuildIndex(); saveDB('home');
+  rebuildIndex(); 
+  saveDB('home');
   closeOv('ov-new-class');
   clrInputs(['inp-cname', 'inp-csub', 'inp-cteacher']);
   renderClassrooms();
@@ -624,9 +883,10 @@ function deleteClassConfirm(id) {
   const c = getC(id);
   if (!c) return;
   confirm_(`Delete "${c.name}"?`, 'All students, lessons, and grades will be permanently deleted.', () => {
-    // FIX: no variable shadowing
     DB.classrooms = DB.classrooms.filter(cls => cls.id !== id);
-    rebuildIndex(); saveDB('home', true); renderClassrooms();
+    rebuildIndex(); 
+    saveDB('home', true); 
+    renderClassrooms();
     toast('Deleted.');
   });
 }
@@ -674,18 +934,21 @@ function openEditStudent(sid) {
   safeSetText('ov-stu-title', 'Edit Student');
   const saveBtn = safeGetElement('stu-save-btn');
   if (saveBtn) saveBtn.textContent = 'Save';
+  
   const nameInput = safeGetElement('inp-sname');
   const phoneInput = safeGetElement('inp-sphone');
   const emailInput = safeGetElement('inp-semail');
   const pnameInput = safeGetElement('inp-pname');
   const pphoneInput = safeGetElement('inp-pphone');
   const noteInput = safeGetElement('inp-snote');
+  
   if (nameInput) nameInput.value = s.name || '';
   if (phoneInput) phoneInput.value = s.phone || '';
   if (emailInput) emailInput.value = s.email || '';
   if (pnameInput) pnameInput.value = s.parentName || '';
   if (pphoneInput) pphoneInput.value = s.parentPhone || '';
   if (noteInput) noteInput.value = s.note || '';
+  
   openOv('ov-student');
 }
 
@@ -694,6 +957,7 @@ function saveStudent() {
   if (!nameInput) return;
   const name = nameInput.value.trim();
   if (!name) { shake('inp-sname'); return; }
+  
   const data = {
     name,
     phone: safeGetElement('inp-sphone')?.value.trim() || '',
@@ -703,11 +967,13 @@ function saveStudent() {
     note: safeGetElement('inp-snote')?.value.trim() || '',
     updatedAt: new Date().toISOString()
   };
+  
   const c = CC();
   if (!c) return;
-  // FIX: capture editSid before closing
+  
   const wasEditing = editSid !== null;
   const editedId = editSid;
+  
   if (wasEditing) {
     const student = c.students.find(s => s.id === editedId);
     if (student) Object.assign(student, data);
@@ -717,8 +983,12 @@ function saveStudent() {
     c.students.push({ id: newId, ...data });
     toast('Student added!');
   }
-  rebuildIndex(); saveDB('class'); closeOv('ov-student'); renderStudents();
-  // FIX: open correct sheet
+  
+  rebuildIndex(); 
+  saveDB('class'); 
+  closeOv('ov-student'); 
+  renderStudents();
+  
   const sheetOv = safeGetElement('sheet-ov');
   if (sheetOv?.classList.contains('open')) {
     const sheetSid = wasEditing ? editedId : c.students[c.students.length - 1].id;
@@ -750,9 +1020,11 @@ function renderStudents() {
   if (tbadge) tbadge.textContent = c.students.length;
   if (!list) return;
   list.innerHTML = '';
+  
   const sorted = [...c.students]
     .sort((a, b) => a.name.localeCompare(b.name))
     .filter(s => !_studentFilter || s.name.toLowerCase().includes(_studentFilter));
+  
   if (!sorted.length && _studentFilter) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-desc">No students match "${_studentFilter}"</div></div>`;
     return;
@@ -761,22 +1033,41 @@ function renderStudents() {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">No students yet</div><div class="empty-desc">Add students using the button above.</div></div>`;
     return;
   }
+  
   sorted.forEach((s, i) => {
     const st = studentStats(s.id);
     const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const rate = st.total > 0 ? Math.round(st.attended / st.total * 100) : 100;
     const hasStreak = checkAttendanceStreak(c, s.id);
+    
     const el = document.createElement('div');
     el.className = 'student-item fade-up';
     el.style.animationDelay = (i * .04) + 's';
     el.innerHTML = `<div class="s-avatar">${esc(initials)}</div>
-      <div class="s-info"><div class="s-name">${esc(s.name)} ${hasStreak ? '<span title="Perfect attendance streak!">🔥</span>' : ''}</div>
-        <div class="s-meta">${s.phone ? `<span class="s-meta-item">📱 ${esc(s.phone)}</span>` : ''}${s.note ? `<span class="s-meta-item">📝 ${esc(s.note)}</span>` : ''}</div></div>
-      <div class="s-att-pills">${st.total > 0 ? `<span class="pill pill-green">✓ ${st.present}</span>${st.late > 0 ? `<span class="pill pill-amber">⏰ ${st.late}</span>` : ''}${st.absent > 0 ? `<span class="pill pill-red">✗ ${st.absent}</span>` : ''}<span class="pill" style="background:var(--cream-2);color:var(--text-light)">${rate}%</span>` : '<span style="font-size:11px;color:var(--text-light)">No lessons</span>'}</div>
+      <div class="s-info">
+        <div class="s-name">${esc(s.name)} ${hasStreak ? '<span title="Perfect attendance streak!">🔥</span>' : ''}</div>
+        <div class="s-meta">
+          ${s.phone ? `<span class="s-meta-item">📱 ${esc(s.phone)}</span>` : ''}
+          ${s.note ? `<span class="s-meta-item">📝 ${esc(s.note)}</span>` : ''}
+        </div>
+      </div>
+      <div class="s-att-pills">
+        ${st.total > 0 ? 
+          `<span class="pill pill-green">✓ ${st.present}</span>
+           ${st.late > 0 ? `<span class="pill pill-amber">⏰ ${st.late}</span>` : ''}
+           ${st.absent > 0 ? `<span class="pill pill-red">✗ ${st.absent}</span>` : ''}
+           <span class="pill" style="background:var(--cream-2);color:var(--text-light)">${rate}%</span>` : 
+          '<span style="font-size:11px;color:var(--text-light)">No lessons</span>'}
+      </div>
       <div class="s-actions">
         <button class="btn btn-xs btn-secondary" onclick="event.stopPropagation();openStudentSheet(${s.id})">View</button>
         <button class="btn btn-xs btn-secondary" onclick="event.stopPropagation();openEditStudent(${s.id})">Edit</button>
-        <button class="icon-btn" style="width:28px;height:28px" onclick="event.stopPropagation();delStudentConfirm(${s.id})"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+        <button class="icon-btn" style="width:28px;height:28px" onclick="event.stopPropagation();delStudentConfirm(${s.id})">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+        </button>
       </div>`;
     el.onclick = () => openStudentSheet(s.id);
     list.appendChild(el);
@@ -789,9 +1080,10 @@ function delStudentConfirm(sid) {
   confirm_(`Remove "${s.name}"?`, 'All attendance and grades for this student will be removed.', () => {
     const c = CC();
     if (!c) return;
-    // FIX: no variable shadowing
     c.students = c.students.filter(st => st.id !== sid);
-    rebuildIndex(); saveDB('class', true); renderStudents();
+    rebuildIndex(); 
+    saveDB('class', true); 
+    renderStudents();
     toast('Student removed.');
   });
 }
@@ -803,38 +1095,75 @@ function openStudentSheet(sid) {
   const rate = st.total > 0 ? Math.round(st.attended / st.total * 100) : 100;
   const rateColor = rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--error)';
   const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  
   const hist = c.lessons.slice().reverse().map(l => {
     const val = (l.data || {})[`att_${s.id}`] || 'present';
     const lbl = { present: 'Present', late: 'Late', absent: 'Absent' };
-    return `<div class="history-row"><div class="history-date">${l.date}</div><div class="history-topic">${esc(l.topic || '(no topic)')}</div><span class="pill pill-${val === 'present' ? 'green' : val === 'late' ? 'amber' : 'red'}">${lbl[val]}</span></div>`;
+    return `<div class="history-row">
+      <div class="history-date">${l.date}</div>
+      <div class="history-topic">${esc(l.topic || '(no topic)')}</div>
+      <span class="pill pill-${val === 'present' ? 'green' : val === 'late' ? 'amber' : 'red'}">${lbl[val]}</span>
+    </div>`;
   }).join('') || '<p style="font-size:13px;color:var(--text-light)">No lessons recorded yet.</p>';
+  
   const sheetContent = safeGetElement('sheet-content');
   if (!sheetContent) return;
+  
   sheetContent.innerHTML = `
     <div class="sheet-hdr">
       <div class="sheet-av" id="sh-av">${esc(initials)}</div>
-      <div style="flex:1"><div class="sheet-name" id="sh-name">${esc(s.name)}</div><div class="sheet-class-name">${esc(c.name)}</div></div>
+      <div style="flex:1">
+        <div class="sheet-name" id="sh-name">${esc(s.name)}</div>
+        <div class="sheet-class-name">${esc(c.name)}</div>
+      </div>
       <button class="sheet-x" onclick="closeSheet()">×</button>
     </div>
     <div class="sheet-sec">
-      <div class="sheet-sec-title">Contact Info <span style="font-size:9px;color:var(--accent);font-weight:500;margin-left:6px;text-transform:none;letter-spacing:0">click any field to edit</span></div>
+      <div class="sheet-sec-title">Contact Info</div>
       <div class="info-grid">
-        ${icard(sid,'name','Name',s.name)}${icard(sid,'phone','Student Phone',s.phone||'')}${icard(sid,'email','Email',s.email||'')}${icard(sid,'parentName','Parent / Guardian',s.parentName||'')}${icard(sid,'parentPhone','Parent Phone',s.parentPhone||'')}${icard(sid,'note','Notes',s.note||'')}
+        ${icard(sid,'name','Name',s.name)}
+        ${icard(sid,'phone','Student Phone',s.phone||'')}
+        ${icard(sid,'email','Email',s.email||'')}
+        ${icard(sid,'parentName','Parent / Guardian',s.parentName||'')}
+        ${icard(sid,'parentPhone','Parent Phone',s.parentPhone||'')}
+        ${icard(sid,'note','Notes',s.note||'')}
       </div>
     </div>
     <div class="sheet-sec">
       <div class="sheet-sec-title">Attendance Summary</div>
       <div class="info-grid">
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Total Lessons</div><div class="info-card-val">${st.total}</div></div>
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Attendance Rate</div><div class="info-card-val" style="color:${rateColor}">${rate}%</div></div>
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Present</div><div class="info-card-val" style="color:var(--success)">${st.present}</div></div>
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Late (attended)</div><div class="info-card-val" style="color:var(--warning)">${st.late}</div></div>
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Absent</div><div class="info-card-val" style="color:var(--error)">${st.absent}</div></div>
-        <div class="info-card no-edit" style="cursor:default"><div class="info-card-label">Days Attended</div><div class="info-card-val">${st.attended}</div></div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Total Lessons</div>
+          <div class="info-card-val">${st.total}</div>
+        </div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Attendance Rate</div>
+          <div class="info-card-val" style="color:${rateColor}">${rate}%</div>
+        </div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Present</div>
+          <div class="info-card-val" style="color:var(--success)">${st.present}</div>
+        </div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Late (attended)</div>
+          <div class="info-card-val" style="color:var(--warning)">${st.late}</div>
+        </div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Absent</div>
+          <div class="info-card-val" style="color:var(--error)">${st.absent}</div>
+        </div>
+        <div class="info-card no-edit" style="cursor:default">
+          <div class="info-card-label">Days Attended</div>
+          <div class="info-card-val">${st.attended}</div>
+        </div>
       </div>
     </div>
-    <div class="sheet-sec"><div class="sheet-sec-title">Lesson History</div>${hist}</div>
+    <div class="sheet-sec">
+      <div class="sheet-sec-title">Lesson History</div>
+      ${hist}
+    </div>
     <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="delStudentConfirm(${sid});closeSheet()">Remove Student</button>`;
+  
   const sheetOv = safeGetElement('sheet-ov');
   if (sheetOv) sheetOv.classList.add('open');
 }
@@ -857,6 +1186,7 @@ function editField(card, sid, field) {
   valDiv.innerHTML = `<input class="info-card-input" value="${esc(cur)}" placeholder="—">`;
   const inp = valDiv.querySelector('input');
   inp.focus(); inp.select();
+  
   function commit() {
     const nv = inp.value.trim();
     s[field] = nv;
@@ -872,6 +1202,7 @@ function editField(card, sid, field) {
       renderStudents();
     }
   }
+  
   inp.onkeydown = e => {
     if (e.key === 'Enter') { e.preventDefault(); commit(); }
     if (e.key === 'Escape') { card.classList.remove('editing'); valDiv.innerHTML = cur ? esc(cur) : '<span class="empty">—</span>'; }
@@ -903,28 +1234,51 @@ function saveLesson() {
   if (!topicInput) return;
   const topic = topicInput.value.trim();
   if (!topic) { shake('inp-ltopic'); return; }
+  
   const dateInput = safeGetElement('inp-ldate');
   const date = dateInput ? dateInput.value : todayStr();
   const c = CC();
   if (!c) return;
+  
   const numInput = safeGetElement('inp-lnum');
   const num = parseInt(numInput ? numInput.value : '') || c.lessons.length + 1;
-  // FIX: capture mode before reset
   const mode = currentLessonMode;
-  const lesson = { id: c.nextLid++, topic, date, num, data: {}, mode, studentIds: c.students.map(s => s.id), updatedAt: new Date().toISOString() };
+  
+  const lesson = { 
+    id: c.nextLid++, 
+    topic, 
+    date, 
+    num, 
+    data: {}, 
+    mode, 
+    studentIds: c.students.map(s => s.id), 
+    updatedAt: new Date().toISOString() 
+  };
+  
   if (mode === 'ielts') {
     IELTS_SECTIONS.forEach(sec => {
       if (sec !== 'Overall Band') {
-        c.columns.push({ id: c.nextCid++, name: sec, ielts: true, lessonId: lesson.id, updatedAt: new Date().toISOString() });
+        c.columns.push({ 
+          id: c.nextCid++, 
+          name: sec, 
+          ielts: true, 
+          lessonId: lesson.id, 
+          updatedAt: new Date().toISOString() 
+        });
       }
     });
   }
+  
   c.lessons.push(lesson);
   LID = lesson.id;
-  rebuildIndex(); saveDB('class'); closeOv('ov-lesson'); renderLessons();
+  rebuildIndex(); 
+  saveDB('class'); 
+  closeOv('ov-lesson'); 
+  renderLessons();
+  
   const tbadge = safeGetElement('tbadge-lessons');
   if (tbadge) tbadge.textContent = c.lessons.length;
-  // FIX: use captured mode
+  
   toast(mode === 'ielts' ? '🎯 IELTS lesson created!' : 'Lesson created!');
 }
 
@@ -956,7 +1310,9 @@ function confirmEditLesson() {
   const numInput = safeGetElement('inp-el-num');
   if (numInput?.value) l.num = parseInt(numInput.value) || l.num;
   l.updatedAt = new Date().toISOString();
-  saveDB('class'); closeOv('ov-edit-lesson'); renderLessons();
+  saveDB('class'); 
+  closeOv('ov-edit-lesson'); 
+  renderLessons();
   if (LID === editLid) renderLessonHeader();
 }
 
@@ -970,17 +1326,21 @@ function renderLessons() {
   if (tbadge) tbadge.textContent = c.lessons.length;
   if (!list) return;
   list.innerHTML = '';
+  
   if (!c.lessons.length) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">No lessons yet</div><div class="empty-desc">Create a lesson to start recording attendance and grades.</div></div>`;
     return;
   }
+  
   const sorted = [...c.lessons]
     .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
     .filter(l => !_lessonFilter || l.topic.toLowerCase().includes(_lessonFilter) || l.date.includes(_lessonFilter));
+  
   if (!sorted.length && _lessonFilter) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-desc">No lessons match "${_lessonFilter}"</div></div>`;
     return;
   }
+  
   sorted.forEach((l, i) => {
     let p = 0, la = 0, ab = 0;
     c.students.forEach(s => {
@@ -992,24 +1352,47 @@ function renderLessons() {
     });
     const total = l.studentIds ? l.studentIds.length : c.students.length;
     const rate = total > 0 ? Math.round((p + la) / total * 100) : 100;
+    
     const el = document.createElement('div');
     el.className = 'lesson-item fade-up' + (l.mode === 'ielts' ? ' ielts-lesson' : '');
     el.style.animationDelay = (i * .04) + 's';
+    
     const status = lessonCompletionStatus(l, c);
     const statusDot = status === 'complete' ? '<span class="lesson-status-dot complete" title="All grades filled">●</span>'
       : status === 'partial' ? '<span class="lesson-status-dot partial" title="Some grades missing">◑</span>'
       : status === 'att-only' ? '<span class="lesson-status-dot att-only" title="Attendance only">○</span>' : '';
-    // NEW: lesson notes preview
+    
     const notesPreview = l.notes ? `<div class="lesson-notes-preview">📝 ${esc(l.notes.substring(0, 60))}${l.notes.length > 60 ? '…' : ''}</div>` : '';
+    
     el.innerHTML = `<div class="lesson-number">${l.num || i + 1}</div>
       <div class="lesson-info">
         <div class="lesson-name">${esc(l.topic)}${l.mode === 'ielts' ? '<span class="ielts-badge" style="margin-left:8px">🎯 IELTS</span>' : ''}${statusDot}</div>
-        <div class="lesson-date-row"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span>${l.date}</span><span style="color:var(--border)">·</span><span>${total} students</span><span style="color:var(--border)">·</span><span style="font-weight:700;color:${rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--error)'}">${rate}% att.</span></div>
+        <div class="lesson-date-row">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>${l.date}</span>
+          <span style="color:var(--border)">·</span>
+          <span>${total} students</span>
+          <span style="color:var(--border)">·</span>
+          <span style="font-weight:700;color:${rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--error)'}">${rate}% att.</span>
+        </div>
         ${notesPreview}
       </div>
-      ${c.students.length > 0 ? `<div class="lesson-att-mini"><div class="att-dot p">${p}</div>${la > 0 ? `<div class="att-dot l">${la}</div>` : ''}${ab > 0 ? `<div class="att-dot a">${ab}</div>` : ''}</div>` : ''}
-      <button style="background:none;border:none;cursor:pointer;padding:4px 7px;color:var(--text-light);border-radius:6px" onclick="event.stopPropagation();openEditLesson(${l.id})"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      ${c.students.length > 0 ? `<div class="lesson-att-mini">
+        <div class="att-dot p">${p}</div>
+        ${la > 0 ? `<div class="att-dot l">${la}</div>` : ''}
+        ${ab > 0 ? `<div class="att-dot a">${ab}</div>` : ''}
+      </div>` : ''}
+      <button style="background:none;border:none;cursor:pointer;padding:4px 7px;color:var(--text-light);border-radius:6px" onclick="event.stopPropagation();openEditLesson(${l.id})">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
       <button class="lesson-del" onclick="event.stopPropagation();delLessonConfirm(${l.id})">×</button>
       <span class="lesson-arrow">→</span>`;
     el.onclick = () => openLesson(l.id);
@@ -1026,7 +1409,9 @@ function delLessonConfirm(lid) {
     c.columns = c.columns.filter(col => col.lessonId !== lid);
     c.lessons = c.lessons.filter(ls => ls.id !== lid);
     if (LID === lid) LID = null;
-    rebuildIndex(); saveDB('class', true); renderLessons();
+    rebuildIndex(); 
+    saveDB('class', true); 
+    renderLessons();
     toast('Lesson deleted.');
   });
 }
@@ -1040,9 +1425,10 @@ function openLesson(lid) {
   if (!l) return;
   const addColBtn = safeGetElement('add-col-btn');
   if (addColBtn) addColBtn.style.display = l.mode === 'ielts' ? 'none' : 'inline-flex';
-  // FIX: Reset scroll position when switching lessons
+  
   const gbScroll = document.querySelector('.gradebook-scroll');
   if (gbScroll) gbScroll.scrollTop = 0;
+  
   renderLessonHeader();
   renderGradebook();
   showScreen('s-lesson');
@@ -1076,18 +1462,38 @@ function calculateOverallBand(sid) {
   let sum = 0, count = 0;
   cols.forEach(col => {
     const val = (l.data || {})[`col_${col.id}_${sid}`];
-    if (val?.trim()) { const n = parseFloat(val); if (!isNaN(n)) { sum += n; count++; } }
+    if (val?.trim()) { 
+      const n = parseFloat(val); 
+      if (!isNaN(n)) { 
+        sum += n; 
+        count++; 
+      } 
+    }
   });
   if (count === 0) return '-';
   return (sum / count).toFixed(1);
 }
 
+function createBandScoreDropdown(colId, sid, currentValue) {
+  const bands = ['', '9.0', '8.5', '8.0', '7.5', '7.0', '6.5', '6.0', '5.5', '5.0', '4.5', '4.0', '3.5', '3.0', '2.5', '2.0', '1.5', '1.0'];
+  
+  let html = `<select class="grade-inp band-select" onchange="saveGrade(${colId}, ${sid}, this.value)">`;
+  bands.forEach(band => {
+    const selected = band === currentValue ? 'selected' : '';
+    html += `<option value="${band}" ${selected}>${band || '—'}</option>`;
+  });
+  html += '</select>';
+  return html;
+}
+
 function renderGradebook() {
   const c = CC(), l = CL();
   if (!l || !c) return;
+  
   const sorted = [...c.students]
     .filter(s => l.studentIds ? l.studentIds.includes(s.id) : true)
     .sort((a, b) => a.name.localeCompare(b.name));
+  
   let p = 0, la = 0, ab = 0;
   sorted.forEach(s => {
     const val = (l.data || {})[`att_${s.id}`] || 'present';
@@ -1095,10 +1501,12 @@ function renderGradebook() {
     else if (val === 'late') la++;
     else ab++;
   });
+  
   const strip = safeGetElement('stats-strip');
   const total = sorted.length;
   const attended = p + la;
   const rate = total > 0 ? Math.round(attended / total * 100) : 100;
+  
   if (strip) {
     strip.innerHTML = `
       <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--success)"></div>Present: ${p}</div>
@@ -1107,38 +1515,62 @@ function renderGradebook() {
       <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--accent)"></div>Attendance: ${rate}%</div>
       <div class="stat-chip">Total: ${total}</div>
       <div class="stat-chip bulk-actions-chip">
-        <button class="bulk-btn bulk-present" onclick="bulkSetAttendance('present')" title="Mark all Present">✓ All Present</button>
-        <button class="bulk-btn bulk-late" onclick="bulkSetAttendance('late')" title="Mark all Late">⏰ All Late</button>
-        <button class="bulk-btn bulk-absent" onclick="bulkSetAttendance('absent')" title="Mark all Absent">✗ All Absent</button>
+        <button class="bulk-btn bulk-present" onclick="bulkSetAttendance('present')">✓ All Present</button>
+        <button class="bulk-btn bulk-late" onclick="bulkSetAttendance('late')">⏰ All Late</button>
+        <button class="bulk-btn bulk-absent" onclick="bulkSetAttendance('absent')">✗ All Absent</button>
       </div>`;
   }
-  const lessonCols = l.mode === 'ielts' ? c.columns.filter(col => col.ielts && col.lessonId === l.id) : c.columns.filter(col => !col.ielts);
+  
+  const lessonCols = l.mode === 'ielts' 
+    ? c.columns.filter(col => col.ielts && col.lessonId === l.id) 
+    : c.columns.filter(col => !col.ielts);
+  
   const head = safeGetElement('gb-head');
   if (head) {
     head.innerHTML = `<tr>
       <th class="th-student">Student</th>
       <th style="width:160px">Attendance</th>
       ${lessonCols.map(col => {
-        if (col.name === 'Overall Band') return `<th class="overall-band-col" style="min-width:120px"><div class="th-inner-flex"><span>⭐ Overall Band</span></div></th>`;
-        return `<th><div class="th-inner-flex"><span>${esc(col.name)}</span>${!col.ielts ? `<div class="th-col-actions"><button class="th-col-btn" onclick="openRenameColumn(${col.id})" title="Rename">✎</button><button class="th-col-btn" onclick="delColumnConfirm(${col.id})" title="Delete">×</button></div>` : ''}</div></th>`;
+        if (col.name === 'Overall Band') {
+          return `<th class="overall-band-col" style="min-width:120px">
+            <div class="th-inner-flex"><span>⭐ Overall Band</span></div>
+          </th>`;
+        }
+        return `<th>
+          <div class="th-inner-flex">
+            <span>${esc(col.name)}</span>
+            ${!col.ielts ? `<div class="th-col-actions">
+              <button class="th-col-btn" onclick="openRenameColumn(${col.id})" title="Rename">✎</button>
+              <button class="th-col-btn" onclick="delColumnConfirm(${col.id})" title="Delete">×</button>
+            </div>` : ''}
+          </div>
+        </th>`;
       }).join('')}
     </tr>`;
   }
+  
   const body = safeGetElement('gb-body');
   if (!body) return;
   body.innerHTML = '';
+  
   sorted.forEach(s => {
     const initials = s.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const attVal = (l.data || {})[`att_${s.id}`] || 'present';
     const absent = attVal === 'absent';
+    
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="td-student"><div class="td-student-inner"><div class="td-mini-av">${esc(initials)}</div><div class="td-name-text">${esc(s.name)}</div></div></td>
+      <td class="td-student">
+        <div class="td-student-inner">
+          <div class="td-mini-av">${esc(initials)}</div>
+          <div class="td-name-text">${esc(s.name)}</div>
+        </div>
+      </td>
       <td class="td-att-cell">
         <div class="att-toggle" role="group" aria-label="Attendance">
-          <button class="att-opt ${attVal === 'present' ? 'active-p' : ''}" onclick="setAtt(${s.id},'present')" title="Present"></button>
-          <button class="att-opt ${attVal === 'late' ? 'active-l' : ''}" onclick="setAtt(${s.id},'late')" title="Late"></button>
-          <button class="att-opt ${attVal === 'absent' ? 'active-a' : ''}" onclick="setAtt(${s.id},'absent')" title="Absent"></button>
+          <button class="att-opt ${attVal === 'present' ? 'active-p' : ''}" onclick="setAtt(${s.id},'present')" title="Present">✓</button>
+          <button class="att-opt ${attVal === 'late' ? 'active-l' : ''}" onclick="setAtt(${s.id},'late')" title="Late">⏰</button>
+          <button class="att-opt ${attVal === 'absent' ? 'active-a' : ''}" onclick="setAtt(${s.id},'absent')" title="Absent">✗</button>
         </div>
       </td>
       ${lessonCols.map(col => {
@@ -1149,21 +1581,24 @@ function renderGradebook() {
         }
         const val = esc((l.data || {})[`col_${col.id}_${s.id}`] || '');
         if (l.mode === 'ielts' && col.ielts) {
-          const bc = getBandClass(val);
-          return `<td class="band-score-cell"><input class="grade-inp ${bc}" type="text" placeholder="—" value="${val}" onchange="saveGrade(${col.id},${s.id},this.value)" style="text-align:center" ${absent ? 'disabled' : ''}></td>`;
+          return `<td class="band-score-cell">${createBandScoreDropdown(col.id, s.id, val)}</td>`;
         }
         return `<td><input class="grade-inp" type="text" placeholder="—" value="${val}" onchange="saveGrade(${col.id},${s.id},this.value)" ${absent ? 'disabled' : ''}></td>`;
       }).join('')}`;
     body.appendChild(tr);
   });
+  
   const addTr = document.createElement('tr');
   addTr.className = 'add-student-row';
-  addTr.innerHTML = `<td class="td-student" colspan="${2 + lessonCols.length}"><input class="add-row-inp" placeholder="+ Type student name and press Enter to add to THIS lesson..." onkeydown="if(event.key==='Enter')quickAddStudentToLesson(this.value,this)"></td>`;
+  addTr.innerHTML = `<td class="td-student" colspan="${2 + lessonCols.length}">
+    <input class="add-row-inp" placeholder="+ Type student name and press Enter to add to THIS lesson..." 
+           onkeydown="if(event.key==='Enter')quickAddStudentToLesson(this.value,this)">
+  </td>`;
   body.appendChild(addTr);
+  
   setupGradebookKeyNav();
 }
 
-// NEW: Bulk attendance
 function bulkSetAttendance(status) {
   const l = CL();
   if (!l) return;
@@ -1206,14 +1641,24 @@ function quickAddStudentToLesson(name, inputEl) {
   if (!name) return;
   const c = CC(), l = CL();
   if (!c || !l) return;
-  const newStudent = { id: c.nextSid++, name, phone: '', email: '', parentName: '', parentPhone: '', note: '', updatedAt: new Date().toISOString() };
+  const newStudent = { 
+    id: c.nextSid++, 
+    name, 
+    phone: '', 
+    email: '', 
+    parentName: '', 
+    parentPhone: '', 
+    note: '', 
+    updatedAt: new Date().toISOString() 
+  };
   c.students.push(newStudent);
   if (l.studentIds) l.studentIds.push(newStudent.id);
   l.updatedAt = new Date().toISOString();
-  rebuildIndex(); saveDB('class');
-  // FIX: clear the input
+  rebuildIndex(); 
+  saveDB('class');
   if (inputEl) inputEl.value = '';
-  renderGradebook(); renderStudents();
+  renderGradebook(); 
+  renderStudents();
   toast(`✅ ${name} added to this lesson and roster!`);
 }
 
@@ -1235,7 +1680,10 @@ function saveColumn() {
   const c = CC();
   if (!c) return;
   c.columns.push({ id: c.nextCid++, name, updatedAt: new Date().toISOString() });
-  rebuildIndex(); saveDB('class'); closeOv('ov-column'); renderGradebook();
+  rebuildIndex(); 
+  saveDB('class'); 
+  closeOv('ov-column'); 
+  renderGradebook();
   toast('Column added!');
 }
 
@@ -1257,8 +1705,11 @@ function confirmRenameCol() {
   if (!name) { shake('inp-rename-col'); return; }
   const col = getColumn(CID, renameColId);
   if (!col) return;
-  col.name = name; col.updatedAt = new Date().toISOString();
-  saveDB('class'); closeOv('ov-rename-col'); renderGradebook();
+  col.name = name; 
+  col.updatedAt = new Date().toISOString();
+  saveDB('class'); 
+  closeOv('ov-rename-col'); 
+  renderGradebook();
   toast('Column renamed!');
 }
 
@@ -1268,15 +1719,16 @@ function delColumnConfirm(cid) {
   confirm_(`Delete column "${col.name}"?`, 'All grades in this column will be permanently deleted.', () => {
     const c = CC();
     if (!c) return;
-    // FIX: no variable shadowing
     c.columns = c.columns.filter(col => col.id !== cid);
-    rebuildIndex(); saveDB('class', true); renderGradebook();
+    rebuildIndex(); 
+    saveDB('class', true); 
+    renderGradebook();
     toast('Column deleted.');
   });
 }
 
 // ============================================
-// GRADE TEMPLATES (NEW FEATURE)
+// GRADE TEMPLATES
 // ============================================
 function renderTemplateSelector() {
   const container = safeGetElement('template-selector');
@@ -1307,7 +1759,10 @@ function applyGradeTemplate(idx) {
   t.columns.forEach(name => {
     c.columns.push({ id: c.nextCid++, name, updatedAt: new Date().toISOString() });
   });
-  rebuildIndex(); saveDB('class'); closeOv('ov-column'); renderGradebook();
+  rebuildIndex(); 
+  saveDB('class'); 
+  closeOv('ov-column'); 
+  renderGradebook();
   toast(`✅ Template "${t.name}" applied!`);
 }
 
@@ -1332,7 +1787,7 @@ function deleteTemplate(idx) {
 }
 
 // ============================================
-// LESSON NOTES (NEW FEATURE)
+// LESSON NOTES
 // ============================================
 function openLessonNotes() {
   const l = CL();
@@ -1348,7 +1803,9 @@ function saveLessonNotes() {
   const notesArea = safeGetElement('lesson-notes-area');
   l.notes = notesArea ? notesArea.value.trim() : '';
   l.updatedAt = new Date().toISOString();
-  saveDB('lesson'); closeOv('ov-lesson-notes'); renderLessons();
+  saveDB('lesson'); 
+  closeOv('ov-lesson-notes'); 
+  renderLessons();
   toast('📝 Notes saved!');
 }
 
@@ -1363,17 +1820,33 @@ function renderAnalytics() {
     scroll.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div><div class="empty-desc">Add students and lessons to see analytics.</div></div>`;
     return;
   }
+  
   const lessonCount = c.lessons.length;
   const studentCount = c.students.length;
   let totalP = 0, totalL = 0, totalA = 0, totalLessons = 0;
+  
   const rows = c.students.map(s => {
     const st = studentStats(s.id);
-    totalP += st.present; totalL += st.late; totalA += st.absent; totalLessons += st.total;
+    totalP += st.present; 
+    totalL += st.late; 
+    totalA += st.absent; 
+    totalLessons += st.total;
     const rate = st.total > 0 ? Math.round(st.attended / st.total * 100) : 100;
     const rateColor = rate >= 80 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--error)';
-    return { name: s.name, rate, attended: st.attended, total: st.total, rateColor, present: st.present, late: st.late, absent: st.absent };
+    return { 
+      name: s.name, 
+      rate, 
+      attended: st.attended, 
+      total: st.total, 
+      rateColor, 
+      present: st.present, 
+      late: st.late, 
+      absent: st.absent 
+    };
   }).sort((a, b) => b.rate - a.rate);
+  
   const avgRate = totalLessons > 0 ? Math.round((totalP + totalL) / totalLessons * 100) : 100;
+  
   scroll.innerHTML = `
     <div class="analytics-grid">
       <div class="astat-card"><div class="astat-val">${lessonCount}</div><div class="astat-lbl">Total Lessons</div></div>
@@ -1401,6 +1874,7 @@ function renderAnalytics() {
         <td style="color:var(--error)">${r.absent}</td>
       </tr>`).join('')}</tbody>
     </table>`;
+  
   requestAnimationFrame(() => {
     const canvas = safeGetElement('att-chart');
     if (!canvas || !window.Chart) return;
@@ -1410,12 +1884,33 @@ function renderAnalytics() {
       type: 'bar',
       data: {
         labels: rows.map(r => r.name.split(' ')[0]),
-        datasets: [{ label: 'Attendance %', data: rows.map(r => r.rate), backgroundColor: rows.map(r => r.rate >= 80 ? 'rgba(90,138,90,0.8)' : r.rate >= 60 ? 'rgba(184,112,32,0.8)' : 'rgba(192,64,64,0.8)'), borderRadius: 6, borderSkipped: false }]
+        datasets: [{ 
+          label: 'Attendance %', 
+          data: rows.map(r => r.rate), 
+          backgroundColor: rows.map(r => r.rate >= 80 ? 'rgba(90,138,90,0.8)' : r.rate >= 60 ? 'rgba(184,112,32,0.8)' : 'rgba(192,64,64,0.8)'), 
+          borderRadius: 6, 
+          borderSkipped: false 
+        }]
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${rows[ctx.dataIndex].name}: ${ctx.raw}% (${rows[ctx.dataIndex].attended}/${rows[ctx.dataIndex].total})` } } },
-        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+        plugins: { 
+          legend: { display: false }, 
+          tooltip: { 
+            callbacks: { 
+              label: ctx => `${rows[ctx.dataIndex].name}: ${ctx.raw}% (${rows[ctx.dataIndex].attended}/${rows[ctx.dataIndex].total})` 
+            } 
+          } 
+        },
+        scales: { 
+          y: { 
+            min: 0, 
+            max: 100, 
+            ticks: { callback: v => v + '%' }, 
+            grid: { color: 'rgba(0,0,0,0.05)' } 
+          }, 
+          x: { grid: { display: false } } 
+        }
       }
     });
   });
@@ -1432,7 +1927,6 @@ function exportLesson() { currentExportContext = { type: 'lesson', id: LID }; op
 function buildExportPayload(context) {
   const settings = DB.exportSettings || { color: { h: 30, s: 60, l: 50, a: 100 } };
   const col = settings.color || { h: 30, s: 60, l: 50, a: 100 };
-  // FIX: use actual lightness value
   const accentColor = `hsl(${col.h}, ${col.s}%, ${col.l}%)`;
   const accentColorDark = `hsl(${col.h}, ${col.s}%, ${Math.max(0, col.l - 15)}%)`;
   const accentColorLight = `hsl(${col.h}, ${col.s}%, ${Math.min(100, col.l + 40)}%)`;
@@ -1446,68 +1940,89 @@ function buildExportPayload(context) {
     const students = [...classroom.students]
       .filter(s => lesson.studentIds ? lesson.studentIds.includes(s.id) : true)
       .sort((a, b) => a.name.localeCompare(b.name));
-    // FIX: no parent phone/email in export
+    
     const rows = students.map(s => ({
       studentName: s.name,
       attendance: (lesson.data || {})[`att_${s.id}`] || 'present',
       grades: cols.map(c => c.name === 'Overall Band' ? calculateOverallBand(s.id) : (lesson.data || {})[`col_${c.id}_${s.id}`] || '')
     }));
+    
     return {
-      type: 'lesson', className: classroom.name, lessonName: lesson.topic,
-      lessonDate: lesson.date, lessonNum: lesson.num,
-      columns: cols.map(c => c.name), rows,
+      type: 'lesson', 
+      className: classroom.name, 
+      lessonName: lesson.topic,
+      lessonDate: lesson.date, 
+      lessonNum: lesson.num,
+      columns: cols.map(c => c.name), 
+      rows,
       logoData: settings.logo ? settings.logo.substring(0, 500000) : null,
-      accentColor, accentColorDark, accentColorLight,
+      accentColor, 
+      accentColorDark, 
+      accentColorLight,
       teacherName: classroom.teacher || DB.user?.name || '',
       institutionName: DB.user?.school || DB.user?.name || 'GradeJournal',
     };
   } else {
     const classroom = getC(context.id);
-    // FIX: only name and attendance rate — no parent phone/email
     const rows = [...classroom.students]
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(s => {
         const stats = studentStats(s.id);
         const rate = stats.total > 0 ? Math.round(stats.attended / stats.total * 100) : 100;
-        return { name: s.name, phone: s.phone || '', attendanceRate: rate, present: stats.present, late: stats.late, absent: stats.absent, total: stats.total };
+        return { 
+          name: s.name, 
+          attendanceRate: rate, 
+          present: stats.present, 
+          late: stats.late, 
+          absent: stats.absent, 
+          total: stats.total 
+        };
       });
+    
     return {
-      type: 'class', className: classroom.name,
+      type: 'class', 
+      className: classroom.name,
       teacherName: classroom.teacher || DB.user?.name || 'Teacher',
-      subject: classroom.subject || 'Class', totalLessons: classroom.lessons.length,
-      rows, logoData: settings.logo ? settings.logo.substring(0, 500000) : null,
-      accentColor, accentColorDark, accentColorLight,
+      subject: classroom.subject || 'Class', 
+      totalLessons: classroom.lessons.length,
+      rows, 
+      logoData: settings.logo ? settings.logo.substring(0, 500000) : null,
+      accentColor, 
+      accentColorDark, 
+      accentColorLight,
       institutionName: DB.user?.school || DB.user?.name || 'GradeJournal',
     };
   }
 }
 
 // ============================================
-// PDF EXPORT - REDESIGNED
+// PDF EXPORT
 // ============================================
 async function exportPDF() {
   if (!currentExportContext) return;
   closeOv('ov-export');
   const btn = document.querySelector('[onclick="exportPDF()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+  if (btn) { 
+    btn.disabled = true; 
+    btn.textContent = '⏳ Generating…'; 
+  }
   toast('✨ Generating PDF…');
+  
   try {
     const payload = buildExportPayload(currentExportContext);
     const { jsPDF } = window.jspdf;
     if (!jsPDF) throw new Error('jsPDF not loaded');
+    
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
     const W = doc.internal.pageSize.getWidth();
     const H = doc.internal.pageSize.getHeight();
 
-    // FIX: use actual lightness from color
     const col = DB.exportSettings?.color || { h: 30, s: 60, l: 50, a: 100 };
-    // FIX: corrected regex and uses actual lightness
     const accentRGB = hslToRgbArr(col.h, col.s, col.l);
     const accentDarkRGB = hslToRgbArr(col.h, col.s, Math.max(0, col.l - 15));
     const accentLightRGB = hslToRgbArr(col.h, Math.max(0, col.s - 20), Math.min(97, col.l + 38));
 
-    // === HEADER BAND ===
-    // Gradient-style header using two rects
+    // Header
     doc.setFillColor(...accentDarkRGB);
     doc.rect(0, 0, W, 30, 'F');
     doc.setFillColor(...accentRGB);
@@ -1515,34 +2030,41 @@ async function exportPDF() {
 
     let logoX = 10;
     if (payload.logoData?.startsWith('data:image')) {
-      try { doc.addImage(payload.logoData, 10, 4, 22, 22, '', 'FAST'); logoX = 36; } catch { logoX = 10; }
+      try { 
+        doc.addImage(payload.logoData, 10, 4, 22, 22, '', 'FAST'); 
+        logoX = 36; 
+      } catch { 
+        logoX = 10; 
+      }
     }
 
-    // Title
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
     doc.text(payload.className, logoX, 12);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
+    
     if (payload.type === 'lesson') {
       doc.text(`${payload.lessonName}  ·  ${formatDateDisplay(payload.lessonDate)}  ·  Lesson ${payload.lessonNum || ''}`, logoX, 19);
     } else {
       doc.text(`Class Roster  ·  ${payload.teacherName}  ·  ${payload.subject}`, logoX, 19);
     }
+    
     doc.setFontSize(8);
     doc.text(`Generated ${new Date().toLocaleDateString()}`, W - 10, 10, { align: 'right' });
     doc.text(payload.institutionName, W - 10, 17, { align: 'right' });
 
     let yPos = 36;
 
-    // === STATS ROW (lesson only) ===
+    // Stats row for lessons
     if (payload.type === 'lesson') {
       const present = payload.rows.filter(r => r.attendance === 'present').length;
       const late = payload.rows.filter(r => r.attendance === 'late').length;
       const absent = payload.rows.filter(r => r.attendance === 'absent').length;
       const total = payload.rows.length;
       const rate = total > 0 ? Math.round((present + late) / total * 100) : 100;
+      
       const stats = [
         { label: 'Students', val: String(total), color: accentRGB },
         { label: 'Attendance', val: `${rate}%`, color: rate >= 80 ? [46,125,50] : rate >= 60 ? [230,81,0] : [198,40,40] },
@@ -1550,12 +2072,12 @@ async function exportPDF() {
         { label: 'Late', val: String(late), color: [230,81,0] },
         { label: 'Absent', val: String(absent), color: [198,40,40] },
       ];
+      
       const sw = (W - 20) / stats.length;
       stats.forEach((s, i) => {
         const sx = 10 + i * sw;
         doc.setFillColor(...accentLightRGB);
         doc.roundedRect(sx, yPos, sw - 3, 18, 3, 3, 'F');
-        // colored top accent line
         doc.setFillColor(...s.color);
         doc.rect(sx, yPos, sw - 3, 2.5, 'F');
         doc.setTextColor(...s.color);
@@ -1570,17 +2092,23 @@ async function exportPDF() {
       yPos += 24;
     }
 
-    // === TABLE ===
+    // Table
     const colNames = payload.type === 'lesson'
       ? ['Student', 'Attendance', ...payload.columns]
-      : ['Student', 'Phone', 'Attendance Rate', 'Present', 'Late', 'Absent'];
+      : ['Student', 'Attendance Rate', 'Present', 'Late', 'Absent', 'Total'];
 
     const colWidths = payload.type === 'lesson'
       ? (() => {
-          const gradeW = payload.columns.length > 0 ? Math.min(20, (W - 20 - 60 - 32) / payload.columns.length) : 20;
-          return [60, 32, ...payload.columns.map(() => gradeW)];
+          const availableWidth = W - 30;
+          const studentWidth = 50;
+          const attendanceWidth = 30;
+          const gradeColumns = payload.columns.length;
+          const gradeWidth = gradeColumns > 0 
+            ? Math.min(25, (availableWidth - studentWidth - attendanceWidth - 20) / gradeColumns)
+            : 0;
+          return [studentWidth, attendanceWidth, ...payload.columns.map(() => gradeWidth)];
         })()
-      : [65, 38, 30, 18, 18, 18];
+      : [50, 25, 18, 18, 18, 18];
 
     const tableW = colWidths.reduce((a, b) => a + b, 0);
     const startX = (W - tableW) / 2;
@@ -1600,7 +2128,7 @@ async function exportPDF() {
     yPos += 10;
 
     const attColors = { present: [46,125,50], late: [230,81,0], absent: [198,40,40] };
-    const attSymbols = { present: '● Present', late: '◑ Late', absent: '✕ Absent' };
+    const attSymbols = { present: '✓ Present', late: '⏰ Late', absent: '✗ Absent' };
 
     payload.rows.forEach((row, ri) => {
       if (yPos + rowH > H - 14) {
@@ -1612,14 +2140,19 @@ async function exportPDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
         cx = startX;
-        colNames.forEach((name, i) => { doc.text(name, cx + 3, yPos + 6.5); cx += colWidths[i]; });
+        colNames.forEach((name, i) => { 
+          doc.text(name, cx + 3, yPos + 6.5); 
+          cx += colWidths[i]; 
+        });
         yPos += 10;
       }
-      // Alternating rows
-      doc.setFillColor(ri % 2 === 0 ? 250 : 255, ri % 2 === 0 ? 247 : 255, ri % 2 === 0 ? 242 : 255);
+      
+      const bgColor = ri % 2 === 0 ? [250, 247, 242] : [255, 255, 255];
+      doc.setFillColor(...bgColor);
       doc.rect(startX, yPos, tableW, rowH, 'F');
-      doc.setDrawColor(220, 210, 195);
-      doc.setLineWidth(0.1);
+      
+      doc.setDrawColor(230, 220, 210);
+      doc.setLineWidth(0.2);
       doc.line(startX, yPos + rowH, startX + tableW, yPos + rowH);
 
       doc.setFont('helvetica', 'normal');
@@ -1645,24 +2178,25 @@ async function exportPDF() {
       } else {
         doc.text(String(row.name || '—').substring(0, 28), cx + 3, yPos + 5.5);
         cx += colWidths[0];
-        doc.text(String(row.phone || '—').substring(0, 16), cx + 3, yPos + 5.5);
-        cx += colWidths[1];
         const rate = row.attendanceRate ?? 100;
         const rRgb = rate >= 80 ? [46,125,50] : rate >= 50 ? [230,81,0] : [198,40,40];
         doc.setTextColor(...rRgb);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${rate}%`, cx + colWidths[2] / 2, yPos + 5.5, { align: 'center' });
-        cx += colWidths[2];
+        doc.text(`${rate}%`, cx + colWidths[1] / 2, yPos + 5.5, { align: 'center' });
+        cx += colWidths[1];
         doc.setTextColor(44, 36, 22);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(46, 125, 50);
-        doc.text(String(row.present ?? ''), cx + colWidths[3] / 2, yPos + 5.5, { align: 'center' });
-        cx += colWidths[3];
+        doc.text(String(row.present ?? ''), cx + colWidths[2] / 2, yPos + 5.5, { align: 'center' });
+        cx += colWidths[2];
         doc.setTextColor(230, 81, 0);
-        doc.text(String(row.late ?? ''), cx + colWidths[4] / 2, yPos + 5.5, { align: 'center' });
-        cx += colWidths[4];
+        doc.text(String(row.late ?? ''), cx + colWidths[3] / 2, yPos + 5.5, { align: 'center' });
+        cx += colWidths[3];
         doc.setTextColor(198, 40, 40);
-        doc.text(String(row.absent ?? ''), cx + colWidths[5] / 2, yPos + 5.5, { align: 'center' });
+        doc.text(String(row.absent ?? ''), cx + colWidths[4] / 2, yPos + 5.5, { align: 'center' });
+        cx += colWidths[4];
+        doc.setTextColor(44, 36, 22);
+        doc.text(String(row.total ?? ''), cx + colWidths[5] / 2, yPos + 5.5, { align: 'center' });
       }
       yPos += rowH;
     });
@@ -1685,15 +2219,18 @@ async function exportPDF() {
       : `GJ-${payload.className}-Roster.pdf`;
     doc.save(filename.replace(/[^a-zA-Z0-9\-_.]/g, '_'));
     toast('✅ PDF downloaded!');
+    
   } catch (err) {
     console.error('PDF error:', err);
     toast('❌ PDF failed: ' + err.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📄 Export as PDF'; }
+    if (btn) { 
+      btn.disabled = false; 
+      btn.textContent = '📄 Export as PDF'; 
+    }
   }
 }
 
-// FIX: corrected hslToRgbArr with all branches
 function hslToRgbArr(h, s, l) {
   s /= 100; l /= 100;
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -1711,8 +2248,16 @@ function hslToRgbArr(h, s, l) {
 
 function formatDateDisplay(dateStr) {
   if (!dateStr) return '';
-  try { return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); }
-  catch { return dateStr; }
+  try { 
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    }); 
+  } catch { 
+    return dateStr; 
+  }
 }
 
 // EXCEL EXPORT
@@ -1720,13 +2265,20 @@ async function exportExcel() {
   if (!currentExportContext) return;
   closeOv('ov-export');
   toast('📊 Generating Excel…');
+  
   try {
     const payload = buildExportPayload(currentExportContext);
-    const response = await fetch(`${API_BASE}/api/export/excel`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const response = await fetch(`${API_BASE}/api/export/excel`, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(payload) 
+    });
+    
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }));
       throw new Error(error.error || 'Export failed');
     }
+    
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1735,9 +2287,12 @@ async function exportExcel() {
       ? `GJ-${payload.className}-${payload.lessonName}.xlsx`
       : `GJ-${payload.className}-Roster.xlsx`;
     a.download = filename.replace(/[^a-zA-Z0-9\-_.]/g, '_');
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    document.body.appendChild(a); 
+    a.click(); 
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
     toast('✅ Excel downloaded!');
+    
   } catch (err) {
     console.error('Excel error:', err);
     toast('❌ Excel failed: ' + err.message);
@@ -1754,15 +2309,20 @@ function backupData() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `gradejournal-backup-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    document.body.appendChild(a); 
+    a.click(); 
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast('✅ Backup downloaded!');
-  } catch { toast('❌ Backup failed'); }
+  } catch { 
+    toast('❌ Backup failed'); 
+  }
 }
 
 function restoreFromFile() {
   const input = document.createElement('input');
-  input.type = 'file'; input.accept = '.json';
+  input.type = 'file'; 
+  input.accept = '.json';
   input.onchange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1780,7 +2340,9 @@ function restoreFromFile() {
           toast('✅ Data restored!');
           renderClassrooms();
         });
-      } catch { toast('❌ Invalid backup file'); }
+      } catch { 
+        toast('❌ Invalid backup file'); 
+      }
     };
     reader.readAsText(file);
   };
@@ -1795,10 +2357,12 @@ let colorPickerState = { h: 30, s: 60, l: 50, a: 100 };
 function openExportSettings() {
   closeOv('ov-export');
   if (!DB.exportSettings) DB.exportSettings = { color: { h:30,s:60,l:50,a:100 } };
+  
   const previewZone = safeGetElement('file-preview-zone');
   const logoPreview = safeGetElement('export-logo-preview');
   const fileName = safeGetElement('file-preview-name');
   const fileSize = safeGetElement('file-preview-size');
+  
   if (DB.exportSettings.logo && logoPreview && fileName && fileSize && previewZone) {
     logoPreview.src = DB.exportSettings.logo;
     fileName.textContent = DB.exportSettings.logoName || 'logo.png';
@@ -1808,16 +2372,20 @@ function openExportSettings() {
     previewZone.classList.remove('show');
     if (logoPreview) logoPreview.src = '';
   }
+  
   const col = DB.exportSettings.color || { h:30,s:60,l:50,a:100 };
   colorPickerState = { ...col };
+  
   const hueSlider = safeGetElement('hue-slider');
   const satSlider = safeGetElement('sat-slider');
   const lightSlider = safeGetElement('light-slider');
   const opacitySlider = safeGetElement('opacity-slider');
+  
   if (hueSlider) hueSlider.value = col.h;
   if (satSlider) satSlider.value = col.s;
   if (lightSlider) lightSlider.value = col.l;
   if (opacitySlider) opacitySlider.value = col.a;
+  
   updateColorDisplay();
   openOv('ov-export-settings');
 }
@@ -1836,7 +2404,10 @@ function setupDragAndDrop() {
       dropZone.classList.add('drag-over');
     }
   };
-  ['dragenter','dragover','dragleave','drop'].forEach(ev => { dropZone.removeEventListener(ev, handle); dropZone.addEventListener(ev, handle, false); });
+  ['dragenter','dragover','dragleave','drop'].forEach(ev => { 
+    dropZone.removeEventListener(ev, handle); 
+    dropZone.addEventListener(ev, handle, false); 
+  });
 }
 
 function onExportLogoFileChange(e) {
@@ -1846,8 +2417,15 @@ function onExportLogoFileChange(e) {
 }
 
 function handleLogoFile(file) {
-  if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) { toast('❌ Please upload PNG or JPEG only'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast('❌ File too large. Max 2MB'); return; }
+  if (!file.type.match(/^image\/(png|jpeg|jpg)$/)) { 
+    toast('❌ Please upload PNG or JPEG only'); 
+    return; 
+  }
+  if (file.size > 2 * 1024 * 1024) { 
+    toast('❌ File too large. Max 2MB'); 
+    return; 
+  }
+  
   const reader = new FileReader();
   reader.onload = (event) => {
     const img = new Image();
@@ -1856,19 +2434,32 @@ function handleLogoFile(file) {
       const ctx = canvas.getContext('2d');
       let w = img.width, h = img.height;
       const max = 400;
-      if (w > h) { if (w > max) { h = Math.round(h * max / w); w = max; } }
-      else { if (h > max) { w = Math.round(w * max / h); h = max; } }
-      canvas.width = w; canvas.height = h;
+      if (w > h) { 
+        if (w > max) { 
+          h = Math.round(h * max / w); 
+          w = max; 
+        } 
+      } else { 
+        if (h > max) { 
+          w = Math.round(w * max / h); 
+          h = max; 
+        } 
+      }
+      canvas.width = w; 
+      canvas.height = h;
       ctx.drawImage(img, 0, 0, w, h);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      
       const logoPreview = safeGetElement('export-logo-preview');
       const fileName = safeGetElement('file-preview-name');
       const fileSize = safeGetElement('file-preview-size');
       const previewZone = safeGetElement('file-preview-zone');
+      
       if (logoPreview) logoPreview.src = dataUrl;
       if (fileName) fileName.textContent = file.name;
       if (fileSize) fileSize.textContent = formatFileSize(file.size);
       if (previewZone) previewZone.classList.add('show');
+      
       DB.exportSettings.logo = dataUrl;
       DB.exportSettings.logoName = file.name;
       DB.exportSettings.logoSize = formatFileSize(file.size);
@@ -1887,7 +2478,12 @@ function removeExportLogo() {
   if (logoInput) logoInput.value = '';
   if (previewZone) previewZone.classList.remove('show');
   if (logoPreview) logoPreview.src = '';
-  if (DB.exportSettings) { delete DB.exportSettings.logo; delete DB.exportSettings.logoName; delete DB.exportSettings.logoSize; saveDB('home'); }
+  if (DB.exportSettings) { 
+    delete DB.exportSettings.logo; 
+    delete DB.exportSettings.logoName; 
+    delete DB.exportSettings.logoSize; 
+    saveDB('home'); 
+  }
 }
 
 function formatFileSize(bytes) {
@@ -1902,7 +2498,10 @@ function toggleColorPicker() {
   if (!dropdown) return;
   if (dropdown.classList.contains('show')) {
     dropdown.classList.remove('show');
-    if (window.__colorPickerCleanup) { window.__colorPickerCleanup(); window.__colorPickerCleanup = null; }
+    if (window.__colorPickerCleanup) { 
+      window.__colorPickerCleanup(); 
+      window.__colorPickerCleanup = null; 
+    }
   } else {
     dropdown.classList.add('show');
     setTimeout(() => setupColorGradient(), 50);
@@ -1917,6 +2516,7 @@ function setupColorGradient() {
   cursor.style.left = colorPickerState.s + '%';
   cursor.style.top = (100 - colorPickerState.l) + '%';
   let isDragging = false;
+  
   const updateFromMouse = (e) => {
     const rect = gradientBar.getBoundingClientRect();
     let x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
@@ -1929,10 +2529,26 @@ function setupColorGradient() {
     if (lightSlider) lightSlider.value = colorPickerState.l;
     updateColorDisplay();
   };
+  
   const onMouseMove = (e) => { if (isDragging) updateFromMouse(e); };
-  const onMouseUp = () => { isDragging = false; document.onmousemove = null; document.onmouseup = null; };
-  gradientBar.onmousedown = (e) => { isDragging = true; updateFromMouse(e); document.onmousemove = onMouseMove; document.onmouseup = onMouseUp; };
-  window.__colorPickerCleanup = () => { gradientBar.onmousedown = null; document.onmousemove = null; document.onmouseup = null; };
+  const onMouseUp = () => { 
+    isDragging = false; 
+    document.onmousemove = null; 
+    document.onmouseup = null; 
+  };
+  
+  gradientBar.onmousedown = (e) => { 
+    isDragging = true; 
+    updateFromMouse(e); 
+    document.onmousemove = onMouseMove; 
+    document.onmouseup = onMouseUp; 
+  };
+  
+  window.__colorPickerCleanup = () => { 
+    gradientBar.onmousedown = null; 
+    document.onmousemove = null; 
+    document.onmouseup = null; 
+  };
 }
 
 function updateGradientBackground() {
@@ -1941,7 +2557,6 @@ function updateGradientBackground() {
   gradientBar.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${colorPickerState.h}, 100%, 50%))`;
 }
 
-// FIX: updateColorDisplay fully functional — updates slider backgrounds too
 function updateColorDisplay() {
   const { h, s, l, a } = colorPickerState;
   const swatch = safeGetElement('color-swatch');
@@ -1950,6 +2565,7 @@ function updateColorDisplay() {
   const satValue = safeGetElement('sat-value');
   const lightValue = safeGetElement('light-value');
   const opacityValue = safeGetElement('opacity-value');
+  
   if (swatch) swatch.style.background = `hsla(${h}, ${s}%, ${l}%, ${a / 100})`;
   if (colorValue) colorValue.textContent = `hsl(${h}°, ${s}%, ${l}%) · ${a}% opacity`;
   if (hueValue) hueValue.textContent = h + '°';
@@ -1961,18 +2577,18 @@ function updateColorDisplay() {
   if (dropdown?.classList.contains('show')) {
     updateGradientBackground();
     const cursor = safeGetElement('color-cursor');
-    if (cursor) { cursor.style.left = s + '%'; cursor.style.top = (100 - l) + '%'; }
+    if (cursor) { 
+      cursor.style.left = s + '%'; 
+      cursor.style.top = (100 - l) + '%'; 
+    }
   }
 
-  // FIX: update sat slider background based on hue
   const satSlider = safeGetElement('sat-slider');
   if (satSlider) satSlider.style.background = `linear-gradient(to right, hsl(${h}, 0%, ${l}%), hsl(${h}, 100%, ${l}%))`;
 
-  // FIX: update lightness slider background
   const lightSlider = safeGetElement('light-slider');
   if (lightSlider) lightSlider.style.background = `linear-gradient(to right, #000, hsl(${h}, ${s}%, 50%), #fff)`;
 
-  // FIX: update opacity slider background properly (not currentColor)
   const opacitySlider = safeGetElement('opacity-slider');
   if (opacitySlider) opacitySlider.style.background = `linear-gradient(to right, transparent, hsl(${h}, ${s}%, ${l}%))`;
 }
@@ -1984,9 +2600,11 @@ function saveExportSettings() {
   closeOv('ov-export-settings');
   const dropdown = safeGetElement('color-picker-dropdown');
   if (dropdown) dropdown.classList.remove('show');
-  if (window.__colorPickerCleanup) { window.__colorPickerCleanup(); window.__colorPickerCleanup = null; }
+  if (window.__colorPickerCleanup) { 
+    window.__colorPickerCleanup(); 
+    window.__colorPickerCleanup = null; 
+  }
   toast('✓ Export settings saved');
-  if (safeGetElement('s-auth')?.classList.contains('active')) loadAuthLogo();
 }
 
 // ============================================
@@ -1998,12 +2616,30 @@ function setupGradebookKeyNav() {
     inp.addEventListener('keydown', (e) => {
       let target = null;
       const cols = inp.closest('tr')?.querySelectorAll('.grade-inp').length || 1;
-      if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); target = inputs[idx + 1]; }
-      else if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); target = inputs[idx - 1]; }
-      else if (e.key === 'Enter') { e.preventDefault(); target = inputs[idx + cols] || inputs[idx - cols]; }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); target = inputs[idx + cols]; }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); target = inputs[idx - cols]; }
-      if (target) { target.focus(); target.select(); }
+      if (e.key === 'Tab' && !e.shiftKey) { 
+        e.preventDefault(); 
+        target = inputs[idx + 1]; 
+      }
+      else if (e.key === 'Tab' && e.shiftKey) { 
+        e.preventDefault(); 
+        target = inputs[idx - 1]; 
+      }
+      else if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        target = inputs[idx + cols] || inputs[idx - cols]; 
+      }
+      else if (e.key === 'ArrowDown') { 
+        e.preventDefault(); 
+        target = inputs[idx + cols]; 
+      }
+      else if (e.key === 'ArrowUp') { 
+        e.preventDefault(); 
+        target = inputs[idx - cols]; 
+      }
+      if (target) { 
+        target.focus(); 
+        target.select(); 
+      }
     });
   });
 }
@@ -2033,11 +2669,13 @@ function showUndoToast(description) {
   clearTimeout(_undoTimeout);
   const t = document.createElement('div');
   t.className = 'toast toast-undo';
-  // FIX: pointer-events on undo toast
   t.style.pointerEvents = 'all';
   t.innerHTML = `${description} <button class="toast-undo-btn" onclick="doUndo()">Undo</button>`;
   document.body.appendChild(t);
-  _undoTimeout = setTimeout(() => { t.remove(); _undoStack.pop(); }, 5000);
+  _undoTimeout = setTimeout(() => { 
+    t.remove(); 
+    _undoStack.pop(); 
+  }, 5000);
 }
 
 function doUndo() {
@@ -2046,8 +2684,14 @@ function doUndo() {
   const entry = _undoStack.pop();
   if (!entry) return;
   entry.restoreFn(entry.snapshot);
-  rebuildIndex(); saveDB('home', true); renderClassrooms();
-  if (safeGetElement('s-classroom')?.classList.contains('active')) { renderStudents(); renderLessons(); renderAnalytics(); }
+  rebuildIndex(); 
+  saveDB('home', true); 
+  renderClassrooms();
+  if (safeGetElement('s-classroom')?.classList.contains('active')) { 
+    renderStudents(); 
+    renderLessons(); 
+    renderAnalytics(); 
+  }
   toast('↩ Restored!');
 }
 
@@ -2062,7 +2706,10 @@ function showOfflineBanner() {
   banner.innerHTML = `⚠️ Working offline — changes saved locally.`;
   document.body.prepend(banner);
 }
-function hideOfflineBanner() { safeGetElement('offline-banner')?.remove(); }
+
+function hideOfflineBanner() { 
+  safeGetElement('offline-banner')?.remove(); 
+}
 
 // ============================================
 // WELCOME CARD
@@ -2108,7 +2755,12 @@ function initKeyboardShortcuts() {
     if (document.querySelector('.ov.open')) return;
     const s = e.key.toLowerCase();
     if (e.ctrlKey || e.metaKey) return;
-    if (s === '?') { showShortcutHint(); return; }
+    
+    if (s === '?') { 
+      showShortcutHint(); 
+      return; 
+    }
+    
     if (s === 'n') {
       if (safeGetElement('s-classroom')?.classList.contains('active')) {
         const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
@@ -2122,20 +2774,26 @@ function initKeyboardShortcuts() {
       else if (safeGetElement('s-classroom')?.classList.contains('active')) exportClass();
     } else if (s === 'h') {
       goHome();
+    } else if (s === 's') {
+      if (safeGetElement('s-home')?.classList.contains('active')) openSettings();
     }
   });
 }
 
-// NEW: keyboard shortcut overlay (feature #13)
 let _shortcutHintEl = null;
 function showShortcutHint() {
-  if (_shortcutHintEl) { _shortcutHintEl.remove(); _shortcutHintEl = null; return; }
+  if (_shortcutHintEl) { 
+    _shortcutHintEl.remove(); 
+    _shortcutHintEl = null; 
+    return; 
+  }
   _shortcutHintEl = document.createElement('div');
   _shortcutHintEl.className = 'shortcut-hint show';
   _shortcutHintEl.innerHTML = `
     <div style="font-weight:700;margin-bottom:8px;font-size:12px;color:rgba(255,255,255,.7)">KEYBOARD SHORTCUTS</div>
     <div><kbd>N</kbd> New student / lesson / classroom</div>
     <div><kbd>E</kbd> Export current view</div>
+    <div><kbd>S</kbd> Settings</div>
     <div><kbd>H</kbd> Go home</div>
     <div><kbd>?</kbd> Toggle this menu</div>
     <div><kbd>Esc</kbd> Close any modal</div>
@@ -2144,70 +2802,56 @@ function showShortcutHint() {
 }
 
 // ============================================
-// UNDO-AWARE DELETE (CLASSROOMS)
-// ============================================
-// NOTE: deleteClassConfirm is defined above near CLASSROOMS section.
-// The duplicate from original code is removed.
-
-// ============================================
-// CONFLICT DIALOG
-// ============================================
-async function showConflictDialog(conflict) {
-  return new Promise((resolve) => {
-    const modal = safeGetElement('ov-conflict');
-    const content = safeGetElement('conflict-content');
-    if (!modal || !content) { resolve('local'); return; }
-    content.innerHTML = `<div style="margin-bottom:20px"><h3>Conflict: ${conflict.type}</h3><p>Modified on both devices.</p></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div style="background:var(--cream-2);padding:16px;border-radius:12px"><div style="font-weight:700;margin-bottom:8px">Local</div><pre style="font-size:11px;overflow:auto">${JSON.stringify(conflict.local,null,2).substring(0,200)}</pre></div>
-        <div style="background:var(--cream-2);padding:16px;border-radius:12px"><div style="font-weight:700;margin-bottom:8px">Cloud</div><pre style="font-size:11px;overflow:auto">${JSON.stringify(conflict.cloud,null,2).substring(0,200)}</pre></div>
-      </div>`;
-    const handleChoice = (choice) => { closeOv('ov-conflict'); resolve(choice); };
-    const klb = safeGetElement('conflict-keep-local');
-    const kcb = safeGetElement('conflict-keep-cloud');
-    const mb = safeGetElement('conflict-merge');
-    if (klb) klb.onclick = () => handleChoice('local');
-    if (kcb) kcb.onclick = () => handleChoice('cloud');
-    if (mb) mb.onclick = () => handleChoice('merge');
-    openOv('ov-conflict');
-  });
-}
-
-// ============================================
-// DEMO REQUEST
-// ============================================
-function openDemoRequest() {
-  // FIX: just show the modal; let user click Gmail from there
-  openOv('ov-demo');
-}
-
-// ============================================
 // UTILITY FUNCTIONS
 // ============================================
-function openOv(id) { const el = safeGetElement(id); if (el) el.classList.add('open'); }
-function closeOv(id) { const el = safeGetElement(id); if (el) el.classList.remove('open'); }
-function v(id) { const el = safeGetElement(id); return el ? el.value.trim() : ''; }
-function sv(id, val) { const el = safeGetElement(id); if (el) el.value = val; }
+function openOv(id) { 
+  const el = safeGetElement(id); 
+  if (el) el.classList.add('open'); 
+}
+
+function closeOv(id) { 
+  const el = safeGetElement(id); 
+  if (el) el.classList.remove('open'); 
+}
+
+function v(id) { 
+  const el = safeGetElement(id); 
+  return el ? el.value.trim() : ''; 
+}
+
+function sv(id, val) { 
+  const el = safeGetElement(id); 
+  if (el) el.value = val; 
+}
 
 function esc(s) {
   if (s === null || s === undefined) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
-function clrInputs(ids) { ids.forEach(id => sv(id, '')); }
+function clrInputs(ids) { 
+  ids.forEach(id => sv(id, '')); 
+}
+
 function shake(id) {
   const el = safeGetElement(id);
   if (!el) return;
   el.style.animation = 'shake .3s';
   setTimeout(() => el.style.animation = '', 300);
 }
-function ifEnter(e, fn) { if (e.key === 'Enter') { e.preventDefault(); fn(); } }
+
+function ifEnter(e, fn) { 
+  if (e.key === 'Enter') { 
+    e.preventDefault(); 
+    fn(); 
+  } 
+}
+
 function todayStr() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-// FIX: showToast removes existing non-undo toasts to prevent stacking
 function showToast(msg) {
   document.querySelectorAll('.toast:not(.toast-undo)').forEach(t => t.remove());
   const t = document.createElement('div');
@@ -2227,7 +2871,12 @@ function confirm_(title, desc, cb) {
   confirmCb = cb;
   openOv('ov-confirm');
 }
-function confirmOk() { if (confirmCb) confirmCb(); confirmCb = null; closeOv('ov-confirm'); }
+
+function confirmOk() { 
+  if (confirmCb) confirmCb(); 
+  confirmCb = null; 
+  closeOv('ov-confirm'); 
+}
 
 // ============================================
 // INITIALIZATION
@@ -2237,24 +2886,61 @@ document.addEventListener('DOMContentLoaded', () => {
   const satSlider = safeGetElement('sat-slider');
   const lightSlider = safeGetElement('light-slider');
   const opacitySlider = safeGetElement('opacity-slider');
-  if (hueSlider) hueSlider.addEventListener('input', (e) => { colorPickerState.h = parseInt(e.target.value); updateColorDisplay(); });
-  if (satSlider) satSlider.addEventListener('input', (e) => { colorPickerState.s = parseInt(e.target.value); updateColorDisplay(); });
-  if (lightSlider) lightSlider.addEventListener('input', (e) => { colorPickerState.l = parseInt(e.target.value); updateColorDisplay(); });
-  if (opacitySlider) opacitySlider.addEventListener('input', (e) => { colorPickerState.a = parseInt(e.target.value); updateColorDisplay(); });
+  
+  if (hueSlider) hueSlider.addEventListener('input', (e) => { 
+    colorPickerState.h = parseInt(e.target.value); 
+    updateColorDisplay(); 
+  });
+  
+  if (satSlider) satSlider.addEventListener('input', (e) => { 
+    colorPickerState.s = parseInt(e.target.value); 
+    updateColorDisplay(); 
+  });
+  
+  if (lightSlider) lightSlider.addEventListener('input', (e) => { 
+    colorPickerState.l = parseInt(e.target.value); 
+    updateColorDisplay(); 
+  });
+  
+  if (opacitySlider) opacitySlider.addEventListener('input', (e) => { 
+    colorPickerState.a = parseInt(e.target.value); 
+    updateColorDisplay(); 
+  });
+  
   setupDragAndDrop();
   initKeyboardShortcuts();
-  window.addEventListener('online', () => { hideOfflineBanner(); showToast('📶 Back online — syncing…'); if (DB.user?.mode === 'supabase') syncWithCloud(); });
-  window.addEventListener('offline', () => { showOfflineBanner(); DB.syncStatus = 'offline'; updateSyncUI(); });
+  
+  window.addEventListener('online', () => { 
+    hideOfflineBanner(); 
+    showToast('📶 Back online — syncing…'); 
+    if (DB.user?.mode === 'supabase') syncWithCloud(); 
+  });
+  
+  window.addEventListener('offline', () => { 
+    showOfflineBanner(); 
+    DB.syncStatus = 'offline'; 
+    updateSyncUI(); 
+  });
+  
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       document.querySelectorAll('.ov.open').forEach(el => el.classList.remove('open'));
       safeGetElement('sheet-ov')?.classList.remove('open');
       safeGetElement('color-picker-dropdown')?.classList.remove('show');
-      if (window.__colorPickerCleanup) { window.__colorPickerCleanup(); window.__colorPickerCleanup = null; }
-      if (_shortcutHintEl) { _shortcutHintEl.remove(); _shortcutHintEl = null; }
+      if (window.__colorPickerCleanup) { 
+        window.__colorPickerCleanup(); 
+        window.__colorPickerCleanup = null; 
+      }
+      if (_shortcutHintEl) { 
+        _shortcutHintEl.remove(); 
+        _shortcutHintEl = null; 
+      }
     }
   });
-  window.addEventListener('beforeunload', () => { if (DB.pendingChanges?.length > 0) saveToLocalStorage(); });
+  
+  window.addEventListener('beforeunload', () => { 
+    if (DB.pendingChanges?.length > 0) saveToLocalStorage(); 
+  });
 });
 
 let splashTimeout = setTimeout(() => {
