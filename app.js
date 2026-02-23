@@ -9,6 +9,38 @@ const MAX_RETRY_ATTEMPTS = 3;
 const BATCH_SIZE = 25;
 
 // ============================================
+// DOM SAFETY CHECKS - NEW SECTION
+// ============================================
+function safeGetElement(id) {
+  const el = document.getElementById(id);
+  if (!el) console.warn(`Element with id "${id}" not found`);
+  return el;
+}
+
+function safeAddClass(id, className) {
+  const el = safeGetElement(id);
+  if (el) el.classList.add(className);
+}
+
+function safeRemoveClass(id, className) {
+  const el = safeGetElement(id);
+  if (el) el.classList.remove(className);
+}
+
+function safeToggleClass(id, className, condition) {
+  const el = safeGetElement(id);
+  if (el) {
+    if (condition) el.classList.add(className);
+    else el.classList.remove(className);
+  }
+}
+
+function safeSetText(id, text) {
+  const el = safeGetElement(id);
+  if (el) el.textContent = text;
+}
+
+// ============================================
 // SUPABASE CLIENT
 // ============================================
 let supabase = null;
@@ -371,7 +403,7 @@ function saveToLocalStorage() {
 }
 
 function updateSyncUI() {
-  const syncIndicator = document.getElementById('sync-indicator');
+  const syncIndicator = safeGetElement('sync-indicator');
   if (!syncIndicator) return;
   
   syncIndicator.className = `sync-indicator ${DB.syncStatus}`;
@@ -833,6 +865,7 @@ async function saveDB(badge, immediate = false) {
         }
       } else if (DB.user?.mode === 'supabase') {
         // Offline - queue for later
+        const lastBadge = saveQueue[saveQueue.length - 1]?.badge;
         queuePendingChanges(lastBadge);
       }
       
@@ -857,7 +890,7 @@ async function saveDB(badge, immediate = false) {
 }
 
 function showSave(badge) {
-  const el = document.getElementById('save-pill-' + badge);
+  const el = safeGetElement('save-pill-' + badge);
   if (!el) return;
   el.classList.add('show');
   clearTimeout(el._t);
@@ -878,9 +911,14 @@ let currentLessonMode = 'standard';
 
 function toggleLessonMode(mode) {
   currentLessonMode = mode;
-  document.getElementById('mode-standard').classList.toggle('active', mode === 'standard');
-  document.getElementById('mode-ielts').classList.toggle('ielts-active', mode === 'ielts');
-  document.getElementById('mode-ielts').classList.toggle('active', mode === 'ielts');
+  const standardBtn = safeGetElement('mode-standard');
+  const ieltsBtn = safeGetElement('mode-ielts');
+  
+  if (standardBtn) standardBtn.classList.toggle('active', mode === 'standard');
+  if (ieltsBtn) {
+    ieltsBtn.classList.toggle('ielts-active', mode === 'ielts');
+    ieltsBtn.classList.toggle('active', mode === 'ielts');
+  }
 }
 
 // ============================================
@@ -888,25 +926,25 @@ function toggleLessonMode(mode) {
 // ============================================
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(id);
+  const el = safeGetElement(id);
   if (el) el.classList.add('active');
 }
 
 function showLanding() { showScreen('s-landing'); }
 function showAuth(mode) { 
   showScreen('s-auth'); 
-  authSwitchTab(mode || 'signin');
+  if (mode) authSwitchTab(mode);
   loadAuthLogo();
 }
 function goHome() { showScreen('s-home'); renderClassrooms(); }
-function goBackToClass() { showScreen('s-classroom'); switchTab('lessons', document.querySelector('[data-tab="lessons"]')); }
+function goBackToClass() { showScreen('s-classroom'); switchTab('students', document.querySelector('[data-tab="students"]')); }
 function showContact() { showScreen('s-contact'); }
 
 // ============================================
 // AUTH LOGO MANAGEMENT
 // ============================================
 function loadAuthLogo() {
-  const logoContainer = document.getElementById('auth-logo-container');
+  const logoContainer = safeGetElement('auth-logo-container');
   if (!logoContainer) return;
   
   if (DB.exportSettings && DB.exportSettings.logo) {
@@ -925,24 +963,38 @@ function loadAuthLogo() {
 let _authMode = 'signin';
 function authSwitchTab(mode) {
   _authMode = mode;
-  document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
-  document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
-  document.getElementById('auth-track').classList.toggle('show-signup', mode === 'signup');
-  document.getElementById('auth-tagline').textContent = mode === 'signin' ? 'Welcome back — log in to continue' : 'Create your free teacher account';
-  document.getElementById('err-signin').classList.remove('show');
-  document.getElementById('err-signup').classList.remove('show');
+  
+  // Safe element access with checks
+  const tabSignin = safeGetElement('tab-signin');
+  const tabSignup = safeGetElement('tab-signup');
+  const authTrack = safeGetElement('auth-track');
+  const authTagline = safeGetElement('auth-tagline');
+  const errSignin = safeGetElement('err-signin');
+  const errSignup = safeGetElement('err-signup');
+  
+  if (tabSignin) tabSignin.classList.toggle('active', mode === 'signin');
+  if (tabSignup) tabSignup.classList.toggle('active', mode === 'signup');
+  if (authTrack) authTrack.classList.toggle('show-signup', mode === 'signup');
+  if (authTagline) {
+    authTagline.textContent = mode === 'signin' 
+      ? 'Welcome back — log in to continue' 
+      : 'Create your free teacher account';
+  }
+  if (errSignin) errSignin.classList.remove('show');
+  if (errSignup) errSignup.classList.remove('show');
 }
 
 function authErr(id, msg) {
-  const el = document.getElementById(id);
+  const el = safeGetElement(id);
+  if (!el) return;
   el.textContent = msg;
   el.classList.add('show');
 }
 
 async function authSubmit(mode) {
   if (mode === 'signin') {
-    const email = document.getElementById('si-email').value.trim();
-    const pass = document.getElementById('si-password').value;
+    const email = safeGetElement('si-email')?.value.trim();
+    const pass = safeGetElement('si-password')?.value;
     
     if (!email || !pass) { 
       authErr('err-signin', 'Please fill in all fields.'); 
@@ -967,14 +1019,25 @@ async function authSubmit(mode) {
         });
         
         if (error) {
-          authErr('err-signin', error.message);
+          // Check if it's a CORS or network error
+          if (error.message.includes('Network error') || error.message.includes('Failed to fetch')) {
+            authErr('err-signin', 'Unable to connect to authentication server. Please check your internet connection or try again later.');
+          } else {
+            authErr('err-signin', error.message);
+          }
           return;
         }
         
         const user = data.user;
         
-        // Load cloud data
-        const cloudData = await loadUserDataFromSupabase(user.id);
+        // Load cloud data with error handling
+        let cloudData = { classrooms: [] };
+        try {
+          cloudData = await loadUserDataFromSupabase(user.id);
+        } catch (loadError) {
+          console.warn('Could not load cloud data, using local only:', loadError);
+          // Continue with empty cloud data
+        }
         
         // Merge guest data with cloud data
         DB = mergeData(guestData, cloudData, 'timestamp');
@@ -996,7 +1059,8 @@ async function authSubmit(mode) {
         enterApp();
         
       } catch (err) {
-        authErr('err-signin', err.message);
+        console.error('Auth error:', err);
+        authErr('err-signin', 'Authentication failed. Please try again.');
       }
       return;
     }
@@ -1005,18 +1069,77 @@ async function authSubmit(mode) {
     DB.user = { email, name: email.split('@')[0], mode: 'local' };
     saveDB('home', true);
     enterApp();
+  } else if (mode === 'signup') {
+    // Handle signup
+    const name = safeGetElement('su-name')?.value.trim();
+    const email = safeGetElement('su-email')?.value.trim();
+    const pass = safeGetElement('su-password')?.value;
+    
+    if (!name || !email || !pass) {
+      authErr('err-signup', 'Please fill in all fields.');
+      return;
+    }
+    
+    if (pass.length < 6) {
+      authErr('err-signup', 'Password must be at least 6 characters.');
+      return;
+    }
+    
+    authErr('err-signup', '');
+    
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password: pass,
+          options: {
+            data: {
+              full_name: name
+            }
+          }
+        });
+        
+        if (error) {
+          if (error.message.includes('Network error')) {
+            authErr('err-signup', 'Network error. Please check your connection.');
+          } else {
+            authErr('err-signup', error.message);
+          }
+          return;
+        }
+        
+        showToast('✅ Account created! Please check your email to confirm.');
+        authSwitchTab('signin');
+        
+      } catch (err) {
+        console.error('Signup error:', err);
+        authErr('err-signup', 'Signup failed. Please try again.');
+      }
+    }
+  } else if (mode === 'guest') {
+    // Guest mode
+    DB.user = { 
+      name: 'Guest', 
+      email: 'guest@local', 
+      mode: 'local',
+      id: 'guest_' + Date.now()
+    };
+    saveDB('home', true);
+    enterApp();
   }
 }
 
 function enterApp() {
   const u = DB.user;
-  document.getElementById('user-name-display').textContent = u.name;
-  document.getElementById('user-av').textContent = u.name.slice(0, 2).toUpperCase();
-  document.getElementById('um-name').textContent = u.name;
-  document.getElementById('um-email').textContent = u.email || 'Local mode';
+  if (!u) return;
+  
+  safeSetText('user-name-display', u.name);
+  safeSetText('user-av', u.name.slice(0, 2).toUpperCase());
+  safeSetText('um-name', u.name);
+  safeSetText('um-email', u.email || 'Local mode');
   
   const h = new Date().getHours();
-  document.getElementById('home-greeting').textContent = (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + u.name.split(' ')[0] + ' 👋';
+  safeSetText('home-greeting', (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + u.name.split(' ')[0] + ' 👋');
   
   showScreen('s-home');
   renderClassrooms();
@@ -1029,7 +1152,7 @@ function enterApp() {
 
 function addSyncIndicator() {
   const topbarRight = document.querySelector('.topbar-right');
-  if (topbarRight && !document.getElementById('sync-indicator')) {
+  if (topbarRight && !safeGetElement('sync-indicator')) {
     const indicator = document.createElement('div');
     indicator.id = 'sync-indicator';
     indicator.className = 'sync-indicator idle';
@@ -1068,13 +1191,16 @@ async function signOut() {
 function checkOnboarding() {
   if (DB.user && !DB.user.onboardingCompleted) {
     if (DB.user.name) {
-      document.getElementById('onboarding-name').value = DB.user.name;
+      const nameInput = safeGetElement('onboarding-name');
+      if (nameInput) nameInput.value = DB.user.name;
     }
     if (DB.user.school) {
-      document.getElementById('onboarding-school').value = DB.user.school;
+      const schoolInput = safeGetElement('onboarding-school');
+      if (schoolInput) schoolInput.value = DB.user.school;
     }
     if (DB.user.role) {
-      document.getElementById('onboarding-role').value = DB.user.role;
+      const roleSelect = safeGetElement('onboarding-role');
+      if (roleSelect) roleSelect.value = DB.user.role;
     }
     
     setTimeout(() => {
@@ -1084,9 +1210,15 @@ function checkOnboarding() {
 }
 
 async function saveOnboarding() {
-  const name = v('onboarding-name');
-  const school = v('onboarding-school');
-  const role = document.getElementById('onboarding-role').value;
+  const nameInput = safeGetElement('onboarding-name');
+  const schoolInput = safeGetElement('onboarding-school');
+  const roleSelect = safeGetElement('onboarding-role');
+  
+  if (!nameInput || !schoolInput || !roleSelect) return;
+  
+  const name = nameInput.value.trim();
+  const school = schoolInput.value.trim();
+  const role = roleSelect.value;
   
   if (!name) {
     shake('onboarding-name');
@@ -1098,13 +1230,13 @@ async function saveOnboarding() {
   DB.user.role = role;
   DB.user.onboardingCompleted = true;
   
-  document.getElementById('user-name-display').textContent = name;
-  document.getElementById('user-av').textContent = name.slice(0, 2).toUpperCase();
-  document.getElementById('um-name').textContent = name;
+  safeSetText('user-name-display', name);
+  safeSetText('user-av', name.slice(0, 2).toUpperCase());
+  safeSetText('um-name', name);
   
   const h = new Date().getHours();
-  document.getElementById('home-greeting').textContent = 
-    (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + name.split(' ')[0] + ' 👋';
+  safeSetText('home-greeting', 
+    (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + name.split(' ')[0] + ' 👋');
   
   if (supabase && DB.user?.mode === 'supabase' && DB.user?.id) {
     await supabase
@@ -1128,9 +1260,12 @@ async function saveOnboarding() {
 const CC_ICONS = ['📐', '📚', '🔬', '✏️', '🎨', '🌍', '💻', '🎵', '🏃', '📖', '⚗️', '🧬'];
 
 function renderClassrooms() {
-  const grid = document.getElementById('classrooms-grid');
+  const grid = safeGetElement('classrooms-grid');
+  if (!grid) return;
+  
   grid.innerHTML = '';
-  document.querySelector('.welcome-card')?.remove();
+  const welcomeCard = document.querySelector('.welcome-card');
+  if (welcomeCard) welcomeCard.remove();
 
   DB.classrooms.forEach((c, i) => {
     const card = document.createElement('div');
@@ -1147,6 +1282,7 @@ function renderClassrooms() {
     card.onclick = () => openClassroom(c.id);
     grid.appendChild(card);
   });
+  
   const nc = document.createElement('div');
   nc.className = 'new-class-card';
   nc.innerHTML = `<div class="new-class-plus">+</div><span>New Classroom</span>`;
@@ -1157,14 +1293,20 @@ function renderClassrooms() {
 }
 
 function createClassroom() {
-  const name = v('inp-cname');
+  const nameInput = safeGetElement('inp-cname');
+  if (!nameInput) return;
+  
+  const name = nameInput.value.trim();
   if (!name) { shake('inp-cname'); return; }
+  
+  const subjectInput = safeGetElement('inp-csub');
+  const teacherInput = safeGetElement('inp-cteacher');
   
   const newClass = {
     id: `class_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // Use string ID
     name,
-    subject: v('inp-csub'),
-    teacher: v('inp-cteacher'),
+    subject: subjectInput ? subjectInput.value.trim() : '',
+    teacher: teacherInput ? teacherInput.value.trim() : '',
     students: [],
     columns: [],
     lessons: [],
@@ -1187,6 +1329,8 @@ function createClassroom() {
 
 function deleteClassConfirm(id) {
   const c = getC(id);
+  if (!c) return;
+  
   confirm_(`Delete "${c.name}"?`, 'All students, lessons, and grades will be permanently deleted.', () => {
     DB.classrooms = DB.classrooms.filter(c => c.id !== id);
     rebuildIndex();
@@ -1199,8 +1343,10 @@ function deleteClassConfirm(id) {
 function openClassroom(id) {
   CID = id;
   const c = CC();
-  document.getElementById('class-crumb').textContent = c.name;
-  document.getElementById('lesson-back-label').textContent = c.name;
+  if (!c) return;
+  
+  safeSetText('class-crumb', c.name);
+  safeSetText('lesson-back-label', c.name);
   showScreen('s-classroom');
   switchTab('students', document.querySelector('[data-tab="students"]'));
   renderStudents();
@@ -1210,7 +1356,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  const p = document.getElementById('tp-' + name);
+  const p = safeGetElement('tp-' + name);
   if (p) p.classList.add('active');
   if (name === 'students') renderStudents();
   if (name === 'lessons') renderLessons();
@@ -1224,8 +1370,9 @@ let editSid = null;
 
 function openAddStudent() {
   editSid = null;
-  document.getElementById('ov-stu-title').textContent = 'Add Student';
-  document.getElementById('stu-save-btn').textContent = 'Add Student';
+  safeSetText('ov-stu-title', 'Add Student');
+  const saveBtn = safeGetElement('stu-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Add Student';
   clrInputs(['inp-sname', 'inp-sphone', 'inp-semail', 'inp-pname', 'inp-pphone', 'inp-snote']);
   openOv('ov-student');
 }
@@ -1235,32 +1382,53 @@ function openEditStudent(sid) {
   const s = getStudent(CID, sid);
   if (!s) return;
   
-  document.getElementById('ov-stu-title').textContent = 'Edit Student';
-  document.getElementById('stu-save-btn').textContent = 'Save';
-  sv('inp-sname', s.name);
-  sv('inp-sphone', s.phone || '');
-  sv('inp-semail', s.email || '');
-  sv('inp-pname', s.parentName || '');
-  sv('inp-pphone', s.parentPhone || '');
-  sv('inp-snote', s.note || '');
+  safeSetText('ov-stu-title', 'Edit Student');
+  const saveBtn = safeGetElement('stu-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Save';
+  
+  const nameInput = safeGetElement('inp-sname');
+  const phoneInput = safeGetElement('inp-sphone');
+  const emailInput = safeGetElement('inp-semail');
+  const pnameInput = safeGetElement('inp-pname');
+  const pphoneInput = safeGetElement('inp-pphone');
+  const noteInput = safeGetElement('inp-snote');
+  
+  if (nameInput) nameInput.value = s.name || '';
+  if (phoneInput) phoneInput.value = s.phone || '';
+  if (emailInput) emailInput.value = s.email || '';
+  if (pnameInput) pnameInput.value = s.parentName || '';
+  if (pphoneInput) pphoneInput.value = s.parentPhone || '';
+  if (noteInput) noteInput.value = s.note || '';
+  
   openOv('ov-student');
 }
 
 function saveStudent() {
-  const name = v('inp-sname');
+  const nameInput = safeGetElement('inp-sname');
+  if (!nameInput) return;
+  
+  const name = nameInput.value.trim();
   if (!name) { shake('inp-sname'); return; }
+  
+  const phoneInput = safeGetElement('inp-sphone');
+  const emailInput = safeGetElement('inp-semail');
+  const pnameInput = safeGetElement('inp-pname');
+  const pphoneInput = safeGetElement('inp-pphone');
+  const noteInput = safeGetElement('inp-snote');
   
   const data = {
     name,
-    phone: v('inp-sphone'),
-    email: v('inp-semail'),
-    parentName: v('inp-pname'),
-    parentPhone: v('inp-pphone'),
-    note: v('inp-snote'),
+    phone: phoneInput ? phoneInput.value.trim() : '',
+    email: emailInput ? emailInput.value.trim() : '',
+    parentName: pnameInput ? pnameInput.value.trim() : '',
+    parentPhone: pphoneInput ? pphoneInput.value.trim() : '',
+    note: noteInput ? noteInput.value.trim() : '',
     updatedAt: new Date().toISOString()
   };
   
   const c = CC();
+  if (!c) return;
+  
   if (editSid !== null) {
     const student = c.students.find(s => s.id === editSid);
     if (student) {
@@ -1278,13 +1446,16 @@ function saveStudent() {
   closeOv('ov-student');
   renderStudents();
   
-  if (document.getElementById('sheet-ov').classList.contains('open')) {
+  const sheetOv = safeGetElement('sheet-ov');
+  if (sheetOv && sheetOv.classList.contains('open')) {
     openStudentSheet(editSid || c.students[c.students.length - 1].id);
   }
 }
 
 function studentStats(sid) {
   const c = CC();
+  if (!c) return { present: 0, late: 0, absent: 0, attended: 0, total: 0 };
+  
   let present = 0, late = 0, absent = 0;
   
   c.lessons.forEach(l => {
@@ -1309,9 +1480,16 @@ function studentStats(sid) {
 
 function renderStudents() {
   const c = CC();
-  const list = document.getElementById('students-list');
-  document.getElementById('students-count').textContent = c.students.length;
-  document.getElementById('tbadge-students').textContent = c.students.length;
+  if (!c) return;
+  
+  const list = safeGetElement('students-list');
+  const studentsCount = safeGetElement('students-count');
+  const tbadge = safeGetElement('tbadge-students');
+  
+  if (studentsCount) studentsCount.textContent = c.students.length;
+  if (tbadge) tbadge.textContent = c.students.length;
+  if (!list) return;
+  
   list.innerHTML = '';
   
   const sorted = [...c.students]
@@ -1353,6 +1531,7 @@ function delStudentConfirm(sid) {
   
   confirm_(`Remove "${s.name}"?`, 'All attendance and grades for this student will be removed.', () => {
     const c = CC();
+    if (!c) return;
     c.students = c.students.filter(s => s.id !== sid);
     rebuildIndex();
     saveDB('class', true);
@@ -1364,7 +1543,7 @@ function delStudentConfirm(sid) {
 // STUDENT SHEET
 function openStudentSheet(sid) {
   const c = CC(), s = getStudent(CID, sid);
-  if (!s) return;
+  if (!c || !s) return;
   
   const st = studentStats(sid);
   const rate = st.total > 0 ? Math.round(st.attended / st.total * 100) : 100;
@@ -1377,7 +1556,10 @@ function openStudentSheet(sid) {
     return `<div class="history-row"><div class="history-date">${l.date}</div><div class="history-topic">${esc(l.topic || '(no topic)')}</div><span class="pill pill-${val === 'present' ? 'green' : val === 'late' ? 'amber' : 'red'}">${lbl[val]}</span></div>`;
   }).join('') || '<p style="font-size:13px;color:var(--text-light)">No lessons recorded yet.</p>';
 
-  document.getElementById('sheet-content').innerHTML = `
+  const sheetContent = safeGetElement('sheet-content');
+  if (!sheetContent) return;
+  
+  sheetContent.innerHTML = `
     <div class="sheet-hdr">
       <div class="sheet-av" id="sh-av">${esc(initials)}</div>
       <div style="flex:1"><div class="sheet-name" id="sh-name">${esc(s.name)}</div><div class="sheet-class-name">${esc(c.name)}</div></div>
@@ -1407,7 +1589,9 @@ function openStudentSheet(sid) {
     </div>
     <div class="sheet-sec"><div class="sheet-sec-title">Lesson History</div>${hist}</div>
     <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="delStudentConfirm(${sid});closeSheet()">Remove Student</button>`;
-  document.getElementById('sheet-ov').classList.add('open');
+  
+  const sheetOv = safeGetElement('sheet-ov');
+  if (sheetOv) sheetOv.classList.add('open');
 }
 
 function icard(sid, field, label, val) {
@@ -1439,9 +1623,9 @@ function editField(card, sid, field) {
     card.classList.remove('editing');
     valDiv.innerHTML = nv ? esc(nv) : '<span class="empty">—</span>';
     if (field === 'name') {
-      const shn = document.getElementById('sh-name');
+      const shn = safeGetElement('sh-name');
       if (shn) shn.textContent = nv || s.name;
-      const shav = document.getElementById('sh-av');
+      const shav = safeGetElement('sh-av');
       if (shav) shav.textContent = nv.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
       renderStudents();
     }
@@ -1457,8 +1641,14 @@ function editField(card, sid, field) {
   inp.onblur = commit;
 }
 
-function closeSheet() { document.getElementById('sheet-ov').classList.remove('open'); }
-function closeSheetIfBg(e) { if (e.target === document.getElementById('sheet-ov')) closeSheet(); }
+function closeSheet() { 
+  const sheetOv = safeGetElement('sheet-ov');
+  if (sheetOv) sheetOv.classList.remove('open'); 
+}
+
+function closeSheetIfBg(e) { 
+  if (e.target === safeGetElement('sheet-ov')) closeSheet(); 
+}
 
 // ============================================
 // LESSONS
@@ -1466,18 +1656,30 @@ function closeSheetIfBg(e) { if (e.target === document.getElementById('sheet-ov'
 function openAddLesson() {
   currentLessonMode = 'standard';
   toggleLessonMode('standard');
-  document.getElementById('inp-ldate').value = todayStr();
-  document.getElementById('inp-ltopic').value = '';
-  document.getElementById('inp-lnum').value = '';
+  const dateInput = safeGetElement('inp-ldate');
+  if (dateInput) dateInput.value = todayStr();
+  const topicInput = safeGetElement('inp-ltopic');
+  if (topicInput) topicInput.value = '';
+  const numInput = safeGetElement('inp-lnum');
+  if (numInput) numInput.value = '';
   openOv('ov-lesson');
 }
 
 function saveLesson() {
-  const topic = v('inp-ltopic');
+  const topicInput = safeGetElement('inp-ltopic');
+  if (!topicInput) return;
+  
+  const topic = topicInput.value.trim();
   if (!topic) { shake('inp-ltopic'); return; }
-  const date = document.getElementById('inp-ldate').value || todayStr();
+  
+  const dateInput = safeGetElement('inp-ldate');
+  const date = dateInput ? dateInput.value : todayStr();
+  
   const c = CC();
-  const num = parseInt(document.getElementById('inp-lnum').value) || c.lessons.length + 1;
+  if (!c) return;
+  
+  const numInput = safeGetElement('inp-lnum');
+  const num = parseInt(numInput ? numInput.value : '') || c.lessons.length + 1;
 
   const lesson = { 
     id: c.nextLid++, 
@@ -1511,7 +1713,9 @@ function saveLesson() {
   saveDB('class');
   closeOv('ov-lesson');
   renderLessons();
-  document.getElementById('tbadge-lessons').textContent = c.lessons.length;
+  
+  const tbadge = safeGetElement('tbadge-lessons');
+  if (tbadge) tbadge.textContent = c.lessons.length;
   toast(currentLessonMode === 'ielts' ? '🎯 IELTS lesson created!' : 'Lesson created!');
 }
 
@@ -1521,22 +1725,35 @@ function openEditLesson(lid) {
   const l = getLesson(CID, lid);
   if (!l) return;
   
-  sv('inp-el-topic', l.topic);
-  sv('inp-el-date', l.date);
-  document.getElementById('inp-el-num').value = l.num || '';
+  const topicInput = safeGetElement('inp-el-topic');
+  const dateInput = safeGetElement('inp-el-date');
+  const numInput = safeGetElement('inp-el-num');
+  
+  if (topicInput) topicInput.value = l.topic;
+  if (dateInput) dateInput.value = l.date;
+  if (numInput) numInput.value = l.num || '';
+  
   openOv('ov-edit-lesson');
 }
 
 function confirmEditLesson() {
-  const topic = v('inp-el-topic');
+  const topicInput = safeGetElement('inp-el-topic');
+  if (!topicInput) return;
+  
+  const topic = topicInput.value.trim();
   if (!topic) { shake('inp-el-topic'); return; }
   
   const l = getLesson(CID, editLid);
   if (!l) return;
   
   l.topic = topic;
-  l.date = v('inp-el-date') || l.date;
-  l.num = parseInt(document.getElementById('inp-el-num').value) || l.num;
+  
+  const dateInput = safeGetElement('inp-el-date');
+  if (dateInput && dateInput.value) l.date = dateInput.value;
+  
+  const numInput = safeGetElement('inp-el-num');
+  if (numInput && numInput.value) l.num = parseInt(numInput.value) || l.num;
+  
   l.updatedAt = new Date().toISOString();
   
   saveDB('class');
@@ -1547,9 +1764,16 @@ function confirmEditLesson() {
 
 function renderLessons() {
   const c = CC();
-  const list = document.getElementById('lessons-list');
-  document.getElementById('lessons-count').textContent = c.lessons.length;
-  document.getElementById('tbadge-lessons').textContent = c.lessons.length;
+  if (!c) return;
+  
+  const list = safeGetElement('lessons-list');
+  const lessonsCount = safeGetElement('lessons-count');
+  const tbadge = safeGetElement('tbadge-lessons');
+  
+  if (lessonsCount) lessonsCount.textContent = c.lessons.length;
+  if (tbadge) tbadge.textContent = c.lessons.length;
+  if (!list) return;
+  
   list.innerHTML = '';
   
   if (!c.lessons.length) {
@@ -1603,6 +1827,7 @@ function delLessonConfirm(lid) {
   
   confirm_(`Delete lesson "${l.topic}"?`, 'All attendance and grade data for this lesson will be lost.', () => {
     const c = CC();
+    if (!c) return;
     c.columns = c.columns.filter(col => col.lessonId !== lid);
     c.lessons = c.lessons.filter(l => l.id !== lid);
     
@@ -1623,11 +1848,15 @@ function openLesson(lid) {
   const l = CL();
   if (!l) return;
   
-  if (l.mode === 'ielts') {
-    document.getElementById('add-col-btn').style.display = 'none';
-  } else {
-    document.getElementById('add-col-btn').style.display = 'inline-flex';
+  const addColBtn = safeGetElement('add-col-btn');
+  if (addColBtn) {
+    if (l.mode === 'ielts') {
+      addColBtn.style.display = 'none';
+    } else {
+      addColBtn.style.display = 'inline-flex';
+    }
   }
+  
   renderLessonHeader();
   renderGradebook();
   showScreen('s-lesson');
@@ -1636,9 +1865,13 @@ function openLesson(lid) {
 function renderLessonHeader() {
   const l = CL();
   if (!l) return;
-  document.getElementById('lgb-name').textContent = l.topic;
-  document.getElementById('lgb-date').textContent = l.date + (l.num ? ` · Lesson ${l.num}` : '') + (l.mode === 'ielts' ? ' · IELTS Mode' : '');
-  document.getElementById('lesson-crumb').textContent = l.topic;
+  
+  const c = CC();
+  if (!c) return;
+  
+  safeSetText('lgb-name', l.topic);
+  safeSetText('lgb-date', l.date + (l.num ? ` · Lesson ${l.num}` : '') + (l.mode === 'ielts' ? ' · IELTS Mode' : ''));
+  safeSetText('lesson-crumb', l.topic);
 }
 
 function getBandClass(score) {
@@ -1679,7 +1912,7 @@ function calculateOverallBand(sid) {
 
 function renderGradebook() {
   const c = CC(), l = CL();
-  if (!l) return;
+  if (!l || !c) return;
   
   const sorted = [...c.students]
     .filter(s => l.studentIds ? l.studentIds.includes(s.id) : true)
@@ -1693,33 +1926,39 @@ function renderGradebook() {
     else ab++;
   });
 
-  const strip = document.getElementById('stats-strip');
+  const strip = safeGetElement('stats-strip');
   const total = sorted.length;
   const attended = p + la;
   const rate = total > 0 ? Math.round(attended / total * 100) : 100;
   
-  strip.innerHTML = `
-    <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--success)"></div>Present: ${p}</div>
-    <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--warning)"></div>Late: ${la}</div>
-    <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--error)"></div>Absent: ${ab}</div>
-    <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--accent)"></div>Attendance Rate: ${rate}%</div>
-    <div class="stat-chip">Total Students: ${total}</div>`;
+  if (strip) {
+    strip.innerHTML = `
+      <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--success)"></div>Present: ${p}</div>
+      <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--warning)"></div>Late: ${la}</div>
+      <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--error)"></div>Absent: ${ab}</div>
+      <div class="stat-chip"><div class="stat-chip-dot" style="background:var(--accent)"></div>Attendance Rate: ${rate}%</div>
+      <div class="stat-chip">Total Students: ${total}</div>`;
+  }
 
   const lessonCols = l.mode === 'ielts' ? c.columns.filter(col => col.ielts && col.lessonId === l.id) : c.columns.filter(col => !col.ielts);
 
-  const head = document.getElementById('gb-head');
-  head.innerHTML = `<tr>
-    <th class="th-student">Student</th>
-    <th style="width:130px">Attendance</th>
-    ${lessonCols.map(col => {
-      if (col.name === 'Overall Band') {
-        return `<th class="overall-band-col" style="min-width:120px"><div class="th-inner-flex"><span>⭐ Overall Band</span></div></th>`;
-      }
-      return `<th><div class="th-inner-flex"><span>${esc(col.name)}</span>${!col.ielts ? `<div class="th-col-actions"><button class="th-col-btn" onclick="openRenameColumn(${col.id})" title="Rename">✎</button><button class="th-col-btn" onclick="delColumnConfirm(${col.id})" title="Delete">×</button></div>` : ''}</div></th>`;
-    }).join('')}
-  </tr>`;
+  const head = safeGetElement('gb-head');
+  if (head) {
+    head.innerHTML = `<tr>
+      <th class="th-student">Student</th>
+      <th style="width:130px">Attendance</th>
+      ${lessonCols.map(col => {
+        if (col.name === 'Overall Band') {
+          return `<th class="overall-band-col" style="min-width:120px"><div class="th-inner-flex"><span>⭐ Overall Band</span></div></th>`;
+        }
+        return `<th><div class="th-inner-flex"><span>${esc(col.name)}</span>${!col.ielts ? `<div class="th-col-actions"><button class="th-col-btn" onclick="openRenameColumn(${col.id})" title="Rename">✎</button><button class="th-col-btn" onclick="delColumnConfirm(${col.id})" title="Delete">×</button></div>` : ''}</div></th>`;
+      }).join('')}
+    </tr>`;
+  }
 
-  const body = document.getElementById('gb-body');
+  const body = safeGetElement('gb-body');
+  if (!body) return;
+  
   body.innerHTML = '';
 
   sorted.forEach(s => {
@@ -1757,7 +1996,7 @@ function renderGradebook() {
   addTr.innerHTML = `<td class="td-student" colspan="${2 + lessonCols.length}"><input class="add-row-inp" placeholder="+ Type student name and press Enter to add to THIS lesson..." onkeydown="if(event.key==='Enter')quickAddStudentToLesson(this.value)"></td>`;
   body.appendChild(addTr);
 
-  // ── Keyboard navigation: Tab/Enter moves between grade inputs ──
+  // Keyboard navigation: Tab/Enter moves between grade inputs
   setupGradebookKeyNav();
 }
 
@@ -1807,6 +2046,8 @@ function quickAddStudentToLesson(name) {
   const c = CC();
   const l = CL();
   
+  if (!c || !l) return;
+  
   const newStudent = { 
     id: c.nextSid++, 
     name, 
@@ -1836,15 +2077,21 @@ function quickAddStudentToLesson(name) {
 // COLUMNS
 // ============================================
 function openAddColumn() {
-  document.getElementById('inp-colname').value = '';
+  const colInput = safeGetElement('inp-colname');
+  if (colInput) colInput.value = '';
   openOv('ov-column');
 }
 
 function saveColumn() {
-  const name = v('inp-colname');
+  const colInput = safeGetElement('inp-colname');
+  if (!colInput) return;
+  
+  const name = colInput.value.trim();
   if (!name) { shake('inp-colname'); return; }
   
   const c = CC();
+  if (!c) return;
+  
   c.columns.push({ 
     id: c.nextCid++, 
     name,
@@ -1864,12 +2111,16 @@ function openRenameColumn(cid) {
   const col = getColumn(CID, cid);
   if (!col) return;
   
-  document.getElementById('inp-rename-col').value = col.name;
+  const renameInput = safeGetElement('inp-rename-col');
+  if (renameInput) renameInput.value = col.name;
   openOv('ov-rename-col');
 }
 
 function confirmRenameCol() {
-  const name = v('inp-rename-col');
+  const renameInput = safeGetElement('inp-rename-col');
+  if (!renameInput) return;
+  
+  const name = renameInput.value.trim();
   if (!name) { shake('inp-rename-col'); return; }
   
   const col = getColumn(CID, renameColId);
@@ -1890,6 +2141,7 @@ function delColumnConfirm(cid) {
   
   confirm_(`Delete column "${col.name}"?`, 'All grades in this column will be permanently deleted.', () => {
     const c = CC();
+    if (!c) return;
     c.columns = c.columns.filter(c => c.id !== cid);
     rebuildIndex();
     saveDB('class', true);
@@ -1903,7 +2155,9 @@ function delColumnConfirm(cid) {
 // ============================================
 function renderAnalytics() {
   const c = CC();
-  const scroll = document.getElementById('analytics-scroll');
+  const scroll = safeGetElement('analytics-scroll');
+  
+  if (!c || !scroll) return;
 
   if (!c.students.length) {
     scroll.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div><div class="empty-desc">Add students and lessons to see analytics.</div></div>`;
@@ -1964,7 +2218,7 @@ function renderAnalytics() {
 
   // Render chart after DOM update
   requestAnimationFrame(() => {
-    const canvas = document.getElementById('att-chart');
+    const canvas = safeGetElement('att-chart');
     if (!canvas || !window.Chart) return;
 
     // Destroy existing chart if any
@@ -2454,35 +2708,40 @@ function openExportSettings() {
     DB.exportSettings = { color: { h: 30, s: 60, l: 50, a: 100 } };
   }
   
-  const previewZone = document.getElementById('file-preview-zone');
-  const logoPreview = document.getElementById('export-logo-preview');
-  const fileName = document.getElementById('file-preview-name');
-  const fileSize = document.getElementById('file-preview-size');
+  const previewZone = safeGetElement('file-preview-zone');
+  const logoPreview = safeGetElement('export-logo-preview');
+  const fileName = safeGetElement('file-preview-name');
+  const fileSize = safeGetElement('file-preview-size');
   
-  if (DB.exportSettings.logo) {
+  if (DB.exportSettings.logo && logoPreview && fileName && fileSize && previewZone) {
     logoPreview.src = DB.exportSettings.logo;
     fileName.textContent = DB.exportSettings.logoName || 'company-logo.png';
     fileSize.textContent = DB.exportSettings.logoSize || '120 KB';
     previewZone.classList.add('show');
-  } else {
+  } else if (previewZone) {
     previewZone.classList.remove('show');
-    logoPreview.src = '';
+    if (logoPreview) logoPreview.src = '';
   }
   
   const col = DB.exportSettings.color || { h: 30, s: 60, l: 50, a: 100 };
   colorPickerState = { ...col };
   
-  document.getElementById('hue-slider').value = col.h;
-  document.getElementById('sat-slider').value = col.s;
-  document.getElementById('light-slider').value = col.l;
-  document.getElementById('opacity-slider').value = col.a;
+  const hueSlider = safeGetElement('hue-slider');
+  const satSlider = safeGetElement('sat-slider');
+  const lightSlider = safeGetElement('light-slider');
+  const opacitySlider = safeGetElement('opacity-slider');
+  
+  if (hueSlider) hueSlider.value = col.h;
+  if (satSlider) satSlider.value = col.s;
+  if (lightSlider) lightSlider.value = col.l;
+  if (opacitySlider) opacitySlider.value = col.a;
   
   updateColorDisplay();
   openOv('ov-export-settings');
 }
 
 function setupDragAndDrop() {
-  const dropZone = document.getElementById('file-upload-zone');
+  const dropZone = safeGetElement('file-upload-zone');
   if (!dropZone) return;
   
   const handlers = {
@@ -2556,10 +2815,15 @@ function handleLogoFile(file) {
       
       const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
       
-      document.getElementById('export-logo-preview').src = compressedDataUrl;
-      document.getElementById('file-preview-name').textContent = file.name;
-      document.getElementById('file-preview-size').textContent = formatFileSize(file.size);
-      document.getElementById('file-preview-zone').classList.add('show');
+      const logoPreview = safeGetElement('export-logo-preview');
+      const fileName = safeGetElement('file-preview-name');
+      const fileSize = safeGetElement('file-preview-size');
+      const previewZone = safeGetElement('file-preview-zone');
+      
+      if (logoPreview) logoPreview.src = compressedDataUrl;
+      if (fileName) fileName.textContent = file.name;
+      if (fileSize) fileSize.textContent = formatFileSize(file.size);
+      if (previewZone) previewZone.classList.add('show');
       
       DB.exportSettings.logo = compressedDataUrl;
       DB.exportSettings.logoName = file.name;
@@ -2573,9 +2837,13 @@ function handleLogoFile(file) {
 }
 
 function removeExportLogo() {
-  document.getElementById('export-logo-file').value = '';
-  document.getElementById('file-preview-zone').classList.remove('show');
-  document.getElementById('export-logo-preview').src = '';
+  const logoInput = safeGetElement('export-logo-file');
+  const previewZone = safeGetElement('file-preview-zone');
+  const logoPreview = safeGetElement('export-logo-preview');
+  
+  if (logoInput) logoInput.value = '';
+  if (previewZone) previewZone.classList.remove('show');
+  if (logoPreview) logoPreview.src = '';
   
   if (DB.exportSettings) {
     delete DB.exportSettings.logo;
@@ -2594,7 +2862,7 @@ function formatFileSize(bytes) {
 }
 
 function toggleColorPicker() {
-  const dropdown = document.getElementById('color-picker-dropdown');
+  const dropdown = safeGetElement('color-picker-dropdown');
   if (!dropdown) return;
   
   const isVisible = dropdown.classList.contains('show');
@@ -2611,8 +2879,8 @@ function toggleColorPicker() {
 }
 
 function setupColorGradient() {
-  const gradientBar = document.getElementById('color-gradient-bar');
-  const cursor = document.getElementById('color-cursor');
+  const gradientBar = safeGetElement('color-gradient-bar');
+  const cursor = safeGetElement('color-cursor');
   if (!gradientBar || !cursor) return;
   
   updateGradientBackground();
@@ -2632,8 +2900,11 @@ function setupColorGradient() {
     colorPickerState.s = Math.round((x / rect.width) * 100);
     colorPickerState.l = Math.round(100 - (y / rect.height) * 100);
     
-    document.getElementById('sat-slider').value = colorPickerState.s;
-    document.getElementById('light-slider').value = colorPickerState.l;
+    const satSlider = safeGetElement('sat-slider');
+    const lightSlider = safeGetElement('light-slider');
+    
+    if (satSlider) satSlider.value = colorPickerState.s;
+    if (lightSlider) lightSlider.value = colorPickerState.l;
     
     updateColorDisplay();
   };
@@ -2664,7 +2935,7 @@ function setupColorGradient() {
 }
 
 function updateGradientBackground() {
-  const gradientBar = document.getElementById('color-gradient-bar');
+  const gradientBar = safeGetElement('color-gradient-bar');
   if (!gradientBar) return;
   
   const h = colorPickerState.h;
@@ -2678,12 +2949,12 @@ function updateGradientBackground() {
 function updateColorDisplay() {
   const { h, s, l, a } = colorPickerState;
   
-  const swatch = document.getElementById('color-swatch');
-  const colorValue = document.getElementById('color-value');
-  const hueValue = document.getElementById('hue-value');
-  const satValue = document.getElementById('sat-value');
-  const lightValue = document.getElementById('light-value');
-  const opacityValue = document.getElementById('opacity-value');
+  const swatch = safeGetElement('color-swatch');
+  const colorValue = safeGetElement('color-value');
+  const hueValue = safeGetElement('hue-value');
+  const satValue = safeGetElement('sat-value');
+  const lightValue = safeGetElement('light-value');
+  const opacityValue = safeGetElement('opacity-value');
   
   if (swatch) {
     swatch.style.background = `hsla(${h}, ${s}%, ${l}%, ${a / 100})`;
@@ -2698,16 +2969,17 @@ function updateColorDisplay() {
   if (lightValue) lightValue.textContent = l + '%';
   if (opacityValue) opacityValue.textContent = a + '%';
   
-  if (document.getElementById('color-picker-dropdown')?.classList.contains('show')) {
+  const dropdown = safeGetElement('color-picker-dropdown');
+  if (dropdown && dropdown.classList.contains('show')) {
     updateGradientBackground();
-    const cursor = document.getElementById('color-cursor');
+    const cursor = safeGetElement('color-cursor');
     if (cursor) {
       cursor.style.left = s + '%';
       cursor.style.top = (100 - l) + '%';
     }
   }
   
-  const opacitySlider = document.getElementById('opacity-slider');
+  const opacitySlider = safeGetElement('opacity-slider');
   if (opacitySlider) {
     opacitySlider.style.background = `linear-gradient(to right, transparent, hsl(${h}, ${s}%, ${l}%))`;
   }
@@ -2720,7 +2992,9 @@ function saveExportSettings() {
   
   saveDB('home', true);
   closeOv('ov-export-settings');
-  document.getElementById('color-picker-dropdown')?.classList.remove('show');
+  
+  const dropdown = safeGetElement('color-picker-dropdown');
+  if (dropdown) dropdown.classList.remove('show');
   
   // Clean up color picker listeners
   if (window.__colorPickerCleanup) {
@@ -2730,7 +3004,7 @@ function saveExportSettings() {
   
   toast('✓ Export settings saved');
   
-  if (document.getElementById('s-auth').classList.contains('active')) {
+  if (safeGetElement('s-auth')?.classList.contains('active')) {
     loadAuthLogo();
   }
 }
@@ -2840,7 +3114,7 @@ function doUndo() {
   rebuildIndex();
   saveDB('home', true);
   renderClassrooms();
-  if (document.getElementById('s-classroom').classList.contains('active')) {
+  if (safeGetElement('s-classroom')?.classList.contains('active')) {
     renderStudents(); renderLessons(); renderAnalytics();
   }
   toast('↩ Restored!');
@@ -2850,7 +3124,7 @@ function doUndo() {
 // OFFLINE BANNER
 // ============================================
 function showOfflineBanner() {
-  if (document.getElementById('offline-banner')) return;
+  if (safeGetElement('offline-banner')) return;
   const banner = document.createElement('div');
   banner.id = 'offline-banner';
   banner.className = 'offline-banner';
@@ -2859,14 +3133,14 @@ function showOfflineBanner() {
 }
 
 function hideOfflineBanner() {
-  document.getElementById('offline-banner')?.remove();
+  safeGetElement('offline-banner')?.remove();
 }
 
 // ============================================
 // WELCOME CARD (first-time home screen helper)
 // ============================================
 function maybeShowWelcomeCard() {
-  const grid = document.getElementById('classrooms-grid');
+  const grid = safeGetElement('classrooms-grid');
   if (!grid || DB.classrooms.length > 0) return;
   const welcome = document.createElement('div');
   welcome.className = 'welcome-card';
@@ -2919,16 +3193,16 @@ function initKeyboardShortcuts() {
 
     if (s === 'n') {
       // New — context-aware
-      if (document.getElementById('s-classroom').classList.contains('active')) {
+      if (safeGetElement('s-classroom')?.classList.contains('active')) {
         const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
         if (activeTab === 'students') openAddStudent();
         else if (activeTab === 'lessons') openAddLesson();
-      } else if (document.getElementById('s-home').classList.contains('active')) {
+      } else if (safeGetElement('s-home')?.classList.contains('active')) {
         openOv('ov-new-class');
       }
     } else if (s === 'e') {
-      if (document.getElementById('s-lesson').classList.contains('active')) exportLesson();
-      else if (document.getElementById('s-classroom').classList.contains('active')) exportClass();
+      if (safeGetElement('s-lesson')?.classList.contains('active')) exportLesson();
+      else if (safeGetElement('s-classroom')?.classList.contains('active')) exportClass();
     } else if (s === 'h') {
       goHome();
     }
@@ -2943,6 +3217,8 @@ function initKeyboardShortcuts() {
 const _origDeleteClassConfirm = window.deleteClassConfirm;
 function deleteClassConfirm(id) {
   const c = getC(id);
+  if (!c) return;
+  
   const snapshot = JSON.parse(JSON.stringify(DB.classrooms));
   confirm_(`Delete "${c.name}"?`, 'All students, lessons, and grades will be permanently deleted.', () => {
     DB.classrooms = DB.classrooms.filter(c => c.id !== id);
@@ -2965,8 +3241,13 @@ function deleteClassConfirm(id) {
 // ============================================
 async function showConflictDialog(conflict) {
   return new Promise((resolve) => {
-    const modal = document.getElementById('ov-conflict');
-    const content = document.getElementById('conflict-content');
+    const modal = safeGetElement('ov-conflict');
+    const content = safeGetElement('conflict-content');
+    
+    if (!modal || !content) {
+      resolve('local');
+      return;
+    }
     
     content.innerHTML = `
       <div style="margin-bottom:20px">
@@ -2990,9 +3271,13 @@ async function showConflictDialog(conflict) {
       resolve(choice);
     };
     
-    document.getElementById('conflict-keep-local').onclick = () => handleChoice('local');
-    document.getElementById('conflict-keep-cloud').onclick = () => handleChoice('cloud');
-    document.getElementById('conflict-merge').onclick = () => handleChoice('merge');
+    const keepLocalBtn = safeGetElement('conflict-keep-local');
+    const keepCloudBtn = safeGetElement('conflict-keep-cloud');
+    const mergeBtn = safeGetElement('conflict-merge');
+    
+    if (keepLocalBtn) keepLocalBtn.onclick = () => handleChoice('local');
+    if (keepCloudBtn) keepCloudBtn.onclick = () => handleChoice('cloud');
+    if (mergeBtn) mergeBtn.onclick = () => handleChoice('merge');
     
     openOv('ov-conflict');
   });
@@ -3015,15 +3300,21 @@ function openDemoRequest() {
 // UTILITY FUNCTIONS
 // ============================================
 function openOv(id) { 
-  const el = document.getElementById(id);
+  const el = safeGetElement(id);
   if (el) el.classList.add('open');
 }
 function closeOv(id) { 
-  const el = document.getElementById(id);
+  const el = safeGetElement(id);
   if (el) el.classList.remove('open');
 }
-function v(id) { return document.getElementById(id).value.trim(); }
-function sv(id, val) { document.getElementById(id).value = val; }
+function v(id) { 
+  const el = safeGetElement(id);
+  return el ? el.value.trim() : ''; 
+}
+function sv(id, val) { 
+  const el = safeGetElement(id);
+  if (el) el.value = val; 
+}
 
 function esc(s) {
   if (s === null || s === undefined) return '';
@@ -3037,7 +3328,7 @@ function esc(s) {
 
 function clrInputs(ids) { ids.forEach(id => sv(id, '')); }
 function shake(id) { 
-  const el = document.getElementById(id); 
+  const el = safeGetElement(id); 
   if (!el) return;
   el.style.animation = 'shake .3s'; 
   setTimeout(() => el.style.animation = '', 300); 
@@ -3060,8 +3351,12 @@ const toast = showToast;
 
 let confirmCb = null;
 function confirm_(title, desc, cb) {
-  document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-desc').textContent = desc;
+  const titleEl = safeGetElement('confirm-title');
+  const descEl = safeGetElement('confirm-desc');
+  
+  if (titleEl) titleEl.textContent = title;
+  if (descEl) descEl.textContent = desc;
+  
   confirmCb = cb;
   openOv('ov-confirm');
 }
@@ -3072,10 +3367,10 @@ function confirmOk() { if (confirmCb) confirmCb(); confirmCb = null; closeOv('ov
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
   // Setup color picker listeners
-  const hueSlider = document.getElementById('hue-slider');
-  const satSlider = document.getElementById('sat-slider');
-  const lightSlider = document.getElementById('light-slider');
-  const opacitySlider = document.getElementById('opacity-slider');
+  const hueSlider = safeGetElement('hue-slider');
+  const satSlider = safeGetElement('sat-slider');
+  const lightSlider = safeGetElement('light-slider');
+  const opacitySlider = safeGetElement('opacity-slider');
   
   if (hueSlider) {
     hueSlider.addEventListener('input', (e) => {
@@ -3126,8 +3421,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       document.querySelectorAll('.ov.open').forEach(el => el.classList.remove('open'));
-      document.getElementById('sheet-ov')?.classList.remove('open');
-      document.getElementById('color-picker-dropdown')?.classList.remove('show');
+      safeGetElement('sheet-ov')?.classList.remove('open');
+      safeGetElement('color-picker-dropdown')?.classList.remove('show');
       
       if (window.__colorPickerCleanup) {
         window.__colorPickerCleanup();
@@ -3146,7 +3441,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Splash screen and initial load
 let splashTimeout = setTimeout(() => {
-  const splash = document.getElementById('splash');
+  const splash = safeGetElement('splash');
   if (splash) {
     splash.classList.add('exit');
     setTimeout(() => {
