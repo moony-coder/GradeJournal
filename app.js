@@ -43,7 +43,7 @@ let DB = {
   classrooms: [], nextId: 1, user: null,
   lastSync: null, syncStatus: 'idle', pendingChanges: [],
   exportSettings: { color: { h: 30, s: 60, l: 50, a: 100 }, logo: null, logoName: null, logoSize: null },
-  gradeTemplates: []  // NEW: grade column templates
+  gradeTemplates: []
 };
 
 let DB_INDEX = {
@@ -92,7 +92,7 @@ function mergeData(local, remote) {
     classrooms: [],
     nextId: Math.max(local.nextId || 1, remote.nextId || 1),
     lastSync: new Date().toISOString(),
-    exportSettings: remote.exportSettings || local.exportSettings  // FIX: merge exportSettings
+    exportSettings: remote.exportSettings || local.exportSettings
   };
   const localMap = new Map(local.classrooms?.map(c => [c.id, c]) || []);
   const remoteMap = new Map(remote.classrooms?.map(c => [c.id, c]) || []);
@@ -140,7 +140,7 @@ async function loadDB() {
       c.students?.forEach(s => { if (!s.updatedAt) s.updatedAt = c.updatedAt; });
       c.lessons?.forEach(l => { if (!l.updatedAt) l.updatedAt = c.updatedAt; });
     });
-    migrateLegacyData();  // FIX: migrate BEFORE rebuilding index
+    migrateLegacyData();
     rebuildIndex();
   } catch (e) {
     console.error('Failed to load DB', e);
@@ -197,7 +197,7 @@ async function syncWithCloud() {
   } catch (error) {
     console.error('Sync failed:', error);
     DB.syncStatus = 'error'; updateSyncUI();
-    showErrorNotification('⚠️ Sync failed. Using local mode.');
+    showErrorNotification('⚠️ Sync failed. Check your connection.');
     queuePendingChanges();
   }
 }
@@ -235,7 +235,7 @@ function saveToLocalStorage() {
 
 function updateSyncUI() {
   const el = safeGetElement('sync-indicator');
-  if (!el) return;
+  if (!el) return; // Silent return if element doesn't exist yet
   el.className = `sync-indicator ${DB.syncStatus}`;
   el.textContent = DB.syncStatus === 'syncing' ? '⟳ Syncing...' :
     DB.syncStatus === 'error' ? '⚠️ Offline' :
@@ -412,10 +412,10 @@ function goBackToClass() { showScreen('s-classroom'); switchTab('students', docu
 function showContact() { showScreen('s-contact'); }
 
 // ============================================
-// AUTH LOGO
+// AUTH LOGO - FIXED to target correct element
 // ============================================
 function loadAuthLogo() {
-  const logoContainer = safeGetElement('auth-logo-container');
+  const logoContainer = document.querySelector('.auth-left-logo-container');
   if (!logoContainer) return;
   if (DB.exportSettings?.logo) {
     logoContainer.innerHTML = `<img src="${DB.exportSettings.logo}" alt="School Logo" class="auth-logo-img" loading="lazy">`;
@@ -425,7 +425,7 @@ function loadAuthLogo() {
 }
 
 // ============================================
-// AUTHENTICATION
+// AUTHENTICATION - FIXED to remove local fallback
 // ============================================
 let _authMode = 'signin';
 
@@ -434,7 +434,6 @@ function authSwitchTab(mode) {
   const tabSignin = safeGetElement('tab-signin');
   const authTagline = safeGetElement('auth-tagline');
   const errSignin = safeGetElement('err-signin');
-  // FIX: properly reflect mode
   if (tabSignin) tabSignin.classList.toggle('active', mode === 'signin');
   if (authTagline) authTagline.textContent = mode === 'signin' ? 'Welcome back — log in to continue' : 'Create your account';
   if (errSignin) errSignin.classList.remove('show');
@@ -449,7 +448,7 @@ async function authSubmit(mode) {
     if (!email || !pass) { showAuthError('Please fill in all fields.'); return; }
     if (pass.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
 
-    // Show loading state immediately
+    // Show loading state
     const btn = safeGetElement('tab-signin');
     const origText = btn ? btn.textContent : 'Log In to GradeJournal →';
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Logging in…'; btn.style.opacity = '0.8'; }
@@ -457,46 +456,62 @@ async function authSubmit(mode) {
 
     if (supabase) {
       try {
-        const guestData = { ...DB };
-        // 8-second timeout so login never hangs indefinitely
+        // 10-second timeout
         let timedOut = false;
-        const timeout = new Promise((_, reject) => setTimeout(() => { timedOut = true; reject(new Error('timeout')); }, 8000));
+        const timeout = new Promise((_, reject) => setTimeout(() => { timedOut = true; reject(new Error('timeout')); }, 10000));
         let result;
         try {
           result = await Promise.race([supabase.auth.signInWithPassword({ email, password: pass }), timeout]);
         } catch (e) {
-          // Network/timeout - fall back to local
           restoreBtn();
-          DB.user = { id: 'local_' + Date.now(), email, name: email.split('@')[0], mode: 'local' };
-          await saveDB('home', true); enterApp(); return;
+          if (e.message === 'timeout') {
+            showAuthError('Connection timeout. Please check your internet and try again.');
+          } else {
+            showAuthError('Network error. Please check your connection.');
+          }
+          return;
         }
+        
         const { data, error } = result;
         if (error) {
           restoreBtn();
           if (error.message.includes('Invalid login credentials')) showAuthError('Invalid email or password.');
           else if (error.message.includes('Email not confirmed')) showAuthError('Please confirm your email first.');
-          else if (error.message.includes('Network') || error.message.includes('fetch')) {
-            DB.user = { id: 'local_' + Date.now(), email, name: email.split('@')[0], mode: 'local' };
-            await saveDB('home', true); enterApp();
-          } else showAuthError(error.message);
+          else showAuthError(error.message);
           return;
         }
+        
         const user = data.user;
         let cloudData = { classrooms: [] };
-        try { cloudData = await loadUserDataFromSupabase(user.id); } catch {}
-        DB = mergeData(guestData, cloudData);
-        DB.user = { id: user.id, email: user.email, name: user.user_metadata?.full_name || user.email.split('@')[0], mode: 'supabase' };
+        try { 
+          cloudData = await loadUserDataFromSupabase(user.id); 
+        } catch (loadErr) {
+          console.error('Failed to load user data:', loadErr);
+          // Continue with empty data
+        }
+        
+        DB = mergeData({ classrooms: [] }, cloudData);
+        DB.user = { 
+          id: user.id, 
+          email: user.email, 
+          name: user.user_metadata?.full_name || user.email.split('@')[0], 
+          mode: 'supabase' 
+        };
+        
         await saveDB('home', true);
         startAutoSync();
         restoreBtn();
         enterApp();
-      } catch (err) { restoreBtn(); console.error('Auth error:', err); showAuthError('Authentication failed. Please try again.'); }
+      } catch (err) { 
+        restoreBtn(); 
+        console.error('Auth error:', err); 
+        showAuthError('Authentication failed. Please try again.'); 
+      }
       return;
+    } else {
+      restoreBtn();
+      showAuthError('Supabase not initialized. Please refresh the page.');
     }
-    restoreBtn();
-    DB.user = { id: 'local_' + Date.now(), email, name: email.split('@')[0], mode: 'local' };
-    await saveDB('home', true);
-    enterApp();
   }
 }
 
@@ -542,7 +557,7 @@ function enterApp() {
   safeSetText('user-name-display', u.name);
   safeSetText('user-av', u.name.slice(0, 2).toUpperCase());
   safeSetText('um-name', u.name);
-  safeSetText('um-email', u.email || 'Local mode');
+  safeSetText('um-email', u.email || 'Cloud mode');
   const h = new Date().getHours();
   safeSetText('home-greeting', (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', ' + u.name.split(' ')[0] + ' 👋');
   showScreen('s-home');
@@ -558,7 +573,7 @@ function addSyncIndicator() {
     indicator.id = 'sync-indicator';
     indicator.className = 'sync-indicator idle';
     topbarRight.prepend(indicator);
-    updateSyncUI();
+    updateSyncUI(); // Now safe because element exists
   }
 }
 
@@ -577,15 +592,12 @@ async function signOut() {
 // ONBOARDING
 // ============================================
 function checkOnboarding() {
-  // Only show onboarding for truly new users (no school set and default name)
   if (DB.user && !DB.user.onboardingCompleted && !DB.user.school) {
-    // Check if name looks auto-generated from email (has no spaces, looks like username)
     const nameIsGeneric = !DB.user.name || !DB.user.name.includes(' ');
     if (nameIsGeneric) {
       if (DB.user.name) { const el = safeGetElement('onboarding-name'); if (el) el.value = DB.user.name; }
       setTimeout(() => openOv('ov-onboarding'), 800);
     } else {
-      // Name is fine, just mark onboarding done
       DB.user.onboardingCompleted = true;
       saveDB('home');
     }
@@ -634,7 +646,6 @@ function renderClassrooms() {
     const studentCount = Array.isArray(c.students) ? c.students.length : 0;
     const lessonCount = Array.isArray(c.lessons) ? c.lessons.length : 0;
     const columnCount = Array.isArray(c.columns) ? c.columns.length : 0;
-    // Attendance streak detection
     const hasStreak = c.students.some(s => checkAttendanceStreak(c, s.id));
     card.innerHTML = `<div class="cc-header"><div class="cc-icon">${icon}</div><button class="cc-del" onclick="event.stopPropagation();deleteClassConfirm('${c.id}')"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div>
       <div class="cc-name">${esc(c.name)}</div><div class="cc-subject">${esc(c.subject || '')}${c.teacher ? ' · ' + esc(c.teacher) : ''}</div>
@@ -652,7 +663,6 @@ function renderClassrooms() {
   maybeShowWelcomeCard();
 }
 
-// FIX: streak detection helper
 function checkAttendanceStreak(classroom, studentId) {
   const sorted = [...classroom.lessons].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
   if (sorted.length < 3) return false;
@@ -688,7 +698,6 @@ function deleteClassConfirm(id) {
   const c = getC(id);
   if (!c) return;
   confirm_(`Delete "${c.name}"?`, 'All students, lessons, and grades will be permanently deleted.', () => {
-    // FIX: no variable shadowing
     DB.classrooms = DB.classrooms.filter(cls => cls.id !== id);
     rebuildIndex(); saveDB('home', true); renderClassrooms();
     toast('Deleted.');
@@ -769,7 +778,6 @@ function saveStudent() {
   };
   const c = CC();
   if (!c) return;
-  // FIX: capture editSid before closing
   const wasEditing = editSid !== null;
   const editedId = editSid;
   if (wasEditing) {
@@ -782,7 +790,6 @@ function saveStudent() {
     toast('Student added!');
   }
   rebuildIndex(); saveDB('class'); closeOv('ov-student'); renderStudents();
-  // FIX: open correct sheet
   const sheetOv = safeGetElement('sheet-ov');
   if (sheetOv?.classList.contains('open')) {
     const sheetSid = wasEditing ? editedId : c.students[c.students.length - 1].id;
@@ -853,7 +860,6 @@ function delStudentConfirm(sid) {
   confirm_(`Remove "${s.name}"?`, 'All attendance and grades for this student will be removed.', () => {
     const c = CC();
     if (!c) return;
-    // FIX: no variable shadowing
     c.students = c.students.filter(st => st.id !== sid);
     rebuildIndex(); saveDB('class', true); renderStudents();
     toast('Student removed.');
@@ -881,7 +887,7 @@ function openStudentSheet(sid) {
       <button class="sheet-x" onclick="closeSheet()">×</button>
     </div>
     <div class="sheet-sec">
-      <div class="sheet-sec-title">Contact Info <span style="font-size:9px;color:var(--accent);font-weight:500;margin-left:6px;text-transform:none;letter-spacing:0">click any field to edit</span></div>
+      <div class="sheet-sec-title">Contact Info</div>
       <div class="info-grid">
         ${icard(sid,'name','Name',s.name)}${icard(sid,'phone','Student Phone',s.phone||'')}${icard(sid,'email','Email',s.email||'')}${icard(sid,'parentName','Parent / Guardian',s.parentName||'')}${icard(sid,'parentPhone','Parent Phone',s.parentPhone||'')}${icard(sid,'note','Notes',s.note||'')}
       </div>
@@ -973,7 +979,6 @@ function saveLesson() {
   if (!c) return;
   const numInput = safeGetElement('inp-lnum');
   const num = parseInt(numInput ? numInput.value : '') || c.lessons.length + 1;
-  // FIX: capture mode before reset
   const mode = currentLessonMode;
   const lesson = { id: c.nextLid++, topic, date, num, data: {}, mode, studentIds: c.students.map(s => s.id), updatedAt: new Date().toISOString() };
   if (mode === 'ielts') {
@@ -988,7 +993,6 @@ function saveLesson() {
   rebuildIndex(); saveDB('class'); closeOv('ov-lesson'); renderLessons();
   const tbadge = safeGetElement('tbadge-lessons');
   if (tbadge) tbadge.textContent = c.lessons.length;
-  // FIX: use captured mode
   toast(mode === 'ielts' ? '🎯 IELTS lesson created!' : 'Lesson created!');
 }
 
@@ -1063,7 +1067,6 @@ function renderLessons() {
     const statusDot = status === 'complete' ? '<span class="lesson-status-dot complete" title="All grades filled">●</span>'
       : status === 'partial' ? '<span class="lesson-status-dot partial" title="Some grades missing">◑</span>'
       : status === 'att-only' ? '<span class="lesson-status-dot att-only" title="Attendance only">○</span>' : '';
-    // NEW: lesson notes preview
     const notesPreview = l.notes ? `<div class="lesson-notes-preview">📝 ${esc(l.notes.substring(0, 60))}${l.notes.length > 60 ? '…' : ''}</div>` : '';
     el.innerHTML = `<div class="lesson-number">${l.num || i + 1}</div>
       <div class="lesson-info">
@@ -1104,7 +1107,6 @@ function openLesson(lid) {
   if (!l) return;
   const addColBtn = safeGetElement('add-col-btn');
   if (addColBtn) addColBtn.style.display = l.mode === 'ielts' ? 'none' : 'inline-flex';
-  // FIX: Reset scroll position when switching lessons
   const gbScroll = document.querySelector('.gradebook-scroll');
   if (gbScroll) gbScroll.scrollTop = 0;
   renderLessonHeader();
@@ -1124,7 +1126,7 @@ function getBandClass(score) {
   if (!score || score === '-' || score === '—') return '';
   const n = parseFloat(score);
   if (isNaN(n)) return '';
-  if (n >= 8.5) return 'band-9';  // top tier
+  if (n >= 8.5) return 'band-9';
   if (n >= 7.5) return 'band-8';
   if (n >= 6.5) return 'band-7';
   if (n >= 5.5) return 'band-6';
@@ -1144,6 +1146,29 @@ function calculateOverallBand(sid) {
   });
   if (count === 0) return '-';
   return (sum / count).toFixed(1);
+}
+
+// NEW: Attendance cycling chip (present → late → absent → present)
+const ATTENDANCE_STATES = ['present', 'late', 'absent'];
+const ATTENDANCE_LABELS = { present: '✓ Present', late: '⏰ Late', absent: '✗ Absent' };
+const ATTENDANCE_COLORS = { present: 'var(--success)', late: 'var(--warning)', absent: 'var(--error)' };
+const ATTENDANCE_BG = { present: 'var(--success-bg)', late: 'var(--warning-bg)', absent: 'var(--error-bg)' };
+const ATTENDANCE_BORDER = { present: 'var(--success-border)', late: 'var(--warning-border)', absent: 'var(--error-border)' };
+
+function cycleAttendance(sid) {
+  const l = CL();
+  if (!l) return;
+  if (!l.data) l.data = {};
+  const current = l.data[`att_${sid}`] || 'present';
+  const currentIndex = ATTENDANCE_STATES.indexOf(current);
+  const nextIndex = (currentIndex + 1) % ATTENDANCE_STATES.length;
+  const nextState = ATTENDANCE_STATES[nextIndex];
+  
+  l.data[`att_${sid}`] = nextState;
+  l.updatedAt = new Date().toISOString();
+  saveDB('lesson');
+  renderGradebook();
+  renderStudents();
 }
 
 function renderGradebook() {
@@ -1199,10 +1224,8 @@ function renderGradebook() {
     tr.innerHTML = `
       <td class="td-student"><div class="td-student-inner"><div class="td-mini-av">${esc(initials)}</div><div class="td-name-text">${esc(s.name)}</div></div></td>
       <td class="td-att-cell">
-        <div class="att-toggle" role="group" aria-label="Attendance">
-          <button class="att-opt ${attVal === 'present' ? 'active-p' : ''}" onclick="setAtt(${s.id},'present')" title="Present">✓</button>
-          <button class="att-opt ${attVal === 'late' ? 'active-l' : ''}" onclick="setAtt(${s.id},'late')" title="Late">⏰</button>
-          <button class="att-opt ${attVal === 'absent' ? 'active-a' : ''}" onclick="setAtt(${s.id},'absent')" title="Absent">✕</button>
+        <div class="att-chip ${attVal}" onclick="cycleAttendance(${s.id})" style="background:${ATTENDANCE_BG[attVal]}; color:${ATTENDANCE_COLORS[attVal]}; border-color:${ATTENDANCE_BORDER[attVal]}">
+          ${ATTENDANCE_LABELS[attVal]}
         </div>
       </td>
       ${lessonCols.map(col => {
@@ -1230,7 +1253,6 @@ function renderGradebook() {
   setupGradebookKeyNav();
 }
 
-// NEW: Bulk attendance
 function bulkSetAttendance(status) {
   const l = CL();
   if (!l) return;
@@ -1278,7 +1300,6 @@ function quickAddStudentToLesson(name, inputEl) {
   if (l.studentIds) l.studentIds.push(newStudent.id);
   l.updatedAt = new Date().toISOString();
   rebuildIndex(); saveDB('class');
-  // FIX: clear the input
   if (inputEl) inputEl.value = '';
   renderGradebook(); renderStudents();
   toast(`✅ ${name} added to this lesson and roster!`);
@@ -1335,7 +1356,6 @@ function delColumnConfirm(cid) {
   confirm_(`Delete column "${col.name}"?`, 'All grades in this column will be permanently deleted.', () => {
     const c = CC();
     if (!c) return;
-    // FIX: no variable shadowing
     c.columns = c.columns.filter(col => col.id !== cid);
     rebuildIndex(); saveDB('class', true); renderGradebook();
     toast('Column deleted.');
@@ -1343,7 +1363,7 @@ function delColumnConfirm(cid) {
 }
 
 // ============================================
-// GRADE TEMPLATES (NEW FEATURE)
+// GRADE TEMPLATES
 // ============================================
 function renderTemplateSelector() {
   const container = safeGetElement('template-selector');
@@ -1399,7 +1419,7 @@ function deleteTemplate(idx) {
 }
 
 // ============================================
-// LESSON NOTES (NEW FEATURE)
+// LESSON NOTES
 // ============================================
 function openLessonNotes() {
   const l = CL();
@@ -1499,7 +1519,6 @@ function exportLesson() { currentExportContext = { type: 'lesson', id: LID }; op
 function buildExportPayload(context) {
   const settings = DB.exportSettings || { color: { h: 30, s: 60, l: 50, a: 100 } };
   const col = settings.color || { h: 30, s: 60, l: 50, a: 100 };
-  // FIX: use actual lightness value
   const accentColor = `hsl(${col.h}, ${col.s}%, ${col.l}%)`;
   const accentColorDark = `hsl(${col.h}, ${col.s}%, ${Math.max(0, col.l - 15)}%)`;
   const accentColorLight = `hsl(${col.h}, ${col.s}%, ${Math.min(100, col.l + 40)}%)`;
@@ -1513,7 +1532,6 @@ function buildExportPayload(context) {
     const students = [...classroom.students]
       .filter(s => lesson.studentIds ? lesson.studentIds.includes(s.id) : true)
       .sort((a, b) => a.name.localeCompare(b.name));
-    // FIX: no parent phone/email in export
     const rows = students.map(s => ({
       studentName: s.name,
       attendance: (lesson.data || {})[`att_${s.id}`] || 'present',
@@ -1530,7 +1548,6 @@ function buildExportPayload(context) {
     };
   } else {
     const classroom = getC(context.id);
-    // FIX: only name and attendance rate — no parent phone/email
     const rows = [...classroom.students]
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(s => {
@@ -1550,7 +1567,7 @@ function buildExportPayload(context) {
 }
 
 // ============================================
-// PDF EXPORT - REDESIGNED
+// PDF EXPORT - FIXED with plain text attendance
 // ============================================
 async function exportPDF() {
   if (!currentExportContext) return;
@@ -1567,15 +1584,12 @@ async function exportPDF() {
     const W = doc.internal.pageSize.getWidth();
     const H = doc.internal.pageSize.getHeight();
 
-    // FIX: use actual lightness from color
     const col = DB.exportSettings?.color || { h: 30, s: 60, l: 50, a: 100 };
-    // FIX: corrected regex and uses actual lightness
     const accentRGB = hslToRgbArr(col.h, col.s, col.l);
     const accentDarkRGB = hslToRgbArr(col.h, col.s, Math.max(0, col.l - 15));
     const accentLightRGB = hslToRgbArr(col.h, Math.max(0, col.s - 20), Math.min(97, col.l + 38));
 
-    // === HEADER BAND ===
-    // Gradient-style header using two rects
+    // Header
     doc.setFillColor(...accentDarkRGB);
     doc.rect(0, 0, W, 30, 'F');
     doc.setFillColor(...accentRGB);
@@ -1586,7 +1600,6 @@ async function exportPDF() {
       try { doc.addImage(payload.logoData, 10, 4, 22, 22, '', 'FAST'); logoX = 36; } catch { logoX = 10; }
     }
 
-    // Title
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
@@ -1604,7 +1617,7 @@ async function exportPDF() {
 
     let yPos = 36;
 
-    // === STATS ROW (lesson only) ===
+    // Stats row for lessons
     if (payload.type === 'lesson') {
       const present = payload.rows.filter(r => r.attendance === 'present').length;
       const late = payload.rows.filter(r => r.attendance === 'late').length;
@@ -1623,7 +1636,6 @@ async function exportPDF() {
         const sx = 10 + i * sw;
         doc.setFillColor(...accentLightRGB);
         doc.roundedRect(sx, yPos, sw - 3, 18, 3, 3, 'F');
-        // colored top accent line
         doc.setFillColor(...s.color);
         doc.rect(sx, yPos, sw - 3, 2.5, 'F');
         doc.setTextColor(...s.color);
@@ -1638,12 +1650,11 @@ async function exportPDF() {
       yPos += 24;
     }
 
-    // === TABLE ===
+    // Table
     const colNames = payload.type === 'lesson'
       ? ['Student', 'Attendance', ...payload.columns]
       : ['Student', 'Phone', 'Attendance Rate', 'Present', 'Late', 'Absent'];
 
-    // FIX: Use full available width for table
     const margin = 10;
     const availW = W - 2 * margin;
     const colWidths = payload.type === 'lesson'
@@ -1655,7 +1666,6 @@ async function exportPDF() {
           return [nameW, attW, ...payload.columns.map(() => Math.max(16, gradeW))];
         })()
       : (() => {
-          // Class roster: name(wide), phone, rate, P, L, A
           const nameW = availW * 0.38;
           const phoneW = availW * 0.22;
           const rateW = availW * 0.18;
@@ -1680,8 +1690,8 @@ async function exportPDF() {
     });
     yPos += 10;
 
-    const attColors = { present: [46,125,50], late: [230,81,0], absent: [198,40,40] };
-    const attSymbols = { present: '● Present', late: '◑ Late', absent: '✕ Absent' };
+    // FIXED: Use plain text for attendance instead of symbols
+    const attText = { present: 'Present', late: 'Late', absent: 'Absent' };
 
     payload.rows.forEach((row, ri) => {
       if (yPos + rowH > H - 14) {
@@ -1712,10 +1722,10 @@ async function exportPDF() {
         doc.text(String(row.studentName || '').substring(0, 28), cx + 3, yPos + 5.5);
         cx += colWidths[0];
         const att = row.attendance || 'present';
-        const attRgb = attColors[att] || [0,0,0];
+        const attRgb = att === 'present' ? [46,125,50] : att === 'late' ? [230,81,0] : [198,40,40];
         doc.setTextColor(...attRgb);
         doc.setFont('helvetica', 'bold');
-        doc.text(attSymbols[att] || att, cx + 3, yPos + 5.5);
+        doc.text(attText[att] || att, cx + 3, yPos + 5.5);
         cx += colWidths[1];
         doc.setTextColor(44, 36, 22);
         doc.setFont('helvetica', 'normal');
@@ -1774,7 +1784,6 @@ async function exportPDF() {
   }
 }
 
-// FIX: corrected hslToRgbArr with all branches
 function hslToRgbArr(h, s, l) {
   s /= 100; l /= 100;
   const c = (1 - Math.abs(2 * l - 1)) * s;
@@ -1807,7 +1816,6 @@ async function exportExcel() {
     const wb = XLSX.utils.book_new();
     
     if (payload.type === 'lesson') {
-      // Lesson sheet: Student | Attendance | grade cols...
       const headers = ['Student', 'Attendance', ...payload.columns];
       const attLabel = { present: 'Present', late: 'Late', absent: 'Absent' };
       const dataRows = payload.rows.map(r => [
@@ -1827,13 +1835,10 @@ async function exportExcel() {
          `Absent: ${payload.rows.filter(r=>r.attendance==='absent').length}`]
       ];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      // Column widths
       ws['!cols'] = [{ wch: 28 }, { wch: 12 }, ...payload.columns.map(() => ({ wch: 14 }))];
-      // Merge title row
       ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
       XLSX.utils.book_append_sheet(wb, ws, 'Lesson');
     } else {
-      // Class roster sheet: Student | Attendance Rate | Present | Late | Absent | Total
       const headers = ['Student', 'Attendance Rate', 'Present', 'Late', 'Absent', 'Total Lessons'];
       const dataRows = payload.rows.map(r => [
         r.name,
@@ -1855,7 +1860,6 @@ async function exportExcel() {
       ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
       XLSX.utils.book_append_sheet(wb, ws, 'Class Roster');
       
-      // Also add per-lesson attendance sheet
       const classroom = getC(currentExportContext.id);
       if (classroom && classroom.lessons.length > 0) {
         const lessons = classroom.lessons.sort((a, b) => a.date.localeCompare(b.date));
@@ -2083,7 +2087,6 @@ function updateGradientBackground() {
   gradientBar.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${colorPickerState.h}, 100%, 50%))`;
 }
 
-// FIX: updateColorDisplay fully functional — updates slider backgrounds too
 function updateColorDisplay() {
   const { h, s, l, a } = colorPickerState;
   const swatch = safeGetElement('color-swatch');
@@ -2106,15 +2109,12 @@ function updateColorDisplay() {
     if (cursor) { cursor.style.left = s + '%'; cursor.style.top = (100 - l) + '%'; }
   }
 
-  // FIX: update sat slider background based on hue
   const satSlider = safeGetElement('sat-slider');
   if (satSlider) satSlider.style.background = `linear-gradient(to right, hsl(${h}, 0%, ${l}%), hsl(${h}, 100%, ${l}%))`;
 
-  // FIX: update lightness slider background
   const lightSlider = safeGetElement('light-slider');
   if (lightSlider) lightSlider.style.background = `linear-gradient(to right, #000, hsl(${h}, ${s}%, 50%), #fff)`;
 
-  // FIX: update opacity slider background properly (not currentColor)
   const opacitySlider = safeGetElement('opacity-slider');
   if (opacitySlider) opacitySlider.style.background = `linear-gradient(to right, transparent, hsl(${h}, ${s}%, ${l}%))`;
 }
@@ -2128,7 +2128,7 @@ function saveExportSettings() {
   if (dropdown) dropdown.classList.remove('show');
   if (window.__colorPickerCleanup) { window.__colorPickerCleanup(); window.__colorPickerCleanup = null; }
   toast('✓ Export settings saved');
-  if (safeGetElement('s-auth')?.classList.contains('active')) loadAuthLogo();
+  loadAuthLogo(); // Now safe because we fixed the selector
 }
 
 // ============================================
@@ -2175,7 +2175,6 @@ function showUndoToast(description) {
   clearTimeout(_undoTimeout);
   const t = document.createElement('div');
   t.className = 'toast toast-undo';
-  // FIX: pointer-events on undo toast
   t.style.pointerEvents = 'all';
   t.innerHTML = `${description} <button class="toast-undo-btn" onclick="doUndo()">Undo</button>`;
   document.body.appendChild(t);
@@ -2351,7 +2350,6 @@ function initKeyboardShortcuts() {
   });
 }
 
-// NEW: keyboard shortcut overlay (feature #13)
 let _shortcutHintEl = null;
 function showShortcutHint() {
   if (_shortcutHintEl) { _shortcutHintEl.remove(); _shortcutHintEl = null; return; }
@@ -2371,8 +2369,6 @@ function showShortcutHint() {
 // ============================================
 // UNDO-AWARE DELETE (CLASSROOMS)
 // ============================================
-// NOTE: deleteClassConfirm is defined above near CLASSROOMS section.
-// The duplicate from original code is removed.
 
 // ============================================
 // CONFLICT DIALOG
@@ -2402,7 +2398,6 @@ async function showConflictDialog(conflict) {
 // DEMO REQUEST
 // ============================================
 function openDemoRequest() {
-  // FIX: just show the modal; let user click Gmail from there
   openOv('ov-demo');
 }
 
@@ -2438,7 +2433,6 @@ function todayStr() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
-// FIX: showToast removes existing non-undo toasts to prevent stacking
 function showToast(msg) {
   document.querySelectorAll('.toast:not(.toast-undo)').forEach(t => t.remove());
   const t = document.createElement('div');
